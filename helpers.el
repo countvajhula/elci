@@ -29,7 +29,7 @@ needs to use straight.el's functions."
           "straight/repos/straight.el/bootstrap.el"
           (expand-file-name "ci-init"))))
     (unless (file-exists-p bootstrap-file)
-      (error "straight.el not found. Run install.el first."))
+      (error "straight.el not found. Run bootstrap.el first."))
     (load bootstrap-file nil 'nomessage)
     ;; ensure all CI scripts use the local init path
     (setq straight-base-dir (expand-file-name "ci-init"))))
