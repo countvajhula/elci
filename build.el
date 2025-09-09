@@ -6,12 +6,15 @@
 ;; Load the shared CI helper functions and constants.
 (require 'helpers (expand-file-name "helpers.el"))
 (ci-load-straight)
-
+(ci-load-optional-deps)
 
 ;; --- The Direct Compilation Tool ---
 (defun ci-compile-package (pkg-name)
   "Compile PKG-NAME using `batch-byte-compile`, print all output,
 and return a shell-friendly exit code."
+  ;; First, ensure the package and its dependencies are known to this session.
+  (ci-install-package pkg-name)
+
   (let* ((load-path-args (ci-get-load-path-args pkg-name))
          ;; For compilation, we want all .el files, including autoloads.
          (files-to-compile (ci-get-package-all-files pkg-name))
