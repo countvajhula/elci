@@ -16,7 +16,7 @@
 ;;     installation and building of these dependencies is already
 ;;     checked in preceding CI checks, i.e., install.el and build.el).
 (straight-use-package
- '(package-lint :host github :repo "countvajhula/package-lint" :branch "control-which-checks-to-run"))
+ '(package-lint :host github :repo "countvajhula/package-lint" :branch "master"))
 
 
 ;; --- The Linter Tool ---
