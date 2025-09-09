@@ -20,6 +20,7 @@ and return a shell-friendly exit code."
     (message (format "--- Compiling %s ---" pkg-name))
     (message (format "Default directory is %s ---" default-directory))
     (message (format "Straight base dir is %s ---" straight-base-dir))
+    (message (format "Load path args: %s ---" load-path-args))
     (unwind-protect
         (let* ((args (append '("-Q" "--batch")
                              load-path-args
