@@ -6,6 +6,7 @@
 ;; Load the shared CI helper functions and constants.
 (require 'helpers (expand-file-name "helpers.el"))
 (ci-load-straight)
+(ci-load-optional-deps)
 
 
 ;; --- The Checkdoc Tool (Multi-Process Version) ---

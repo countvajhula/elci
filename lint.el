@@ -6,6 +6,7 @@
 ;; Load the shared CI helper functions and constants.
 (require 'helpers (expand-file-name "helpers.el"))
 (ci-load-straight)
+(ci-load-optional-deps)
 
 ;; Install the forked linter.
 ;; This uses a customized version of package-lint that:
