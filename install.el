@@ -14,10 +14,7 @@
 
 ;; Optionally load project-specific external dependencies from the project's
 ;; own `ci/` directory, which is one level up from this script's location.
-(let ((project-ci-dir (expand-file-name "../ci")))
-  (when (file-exists-p (expand-file-name "ci-deps.el" project-ci-dir))
-    (add-to-list 'load-path project-ci-dir)
-    (require 'ci-deps)))
+(ci-load-optional-deps)
 
 (setq straight-allow-recipe-inheritance nil)
 

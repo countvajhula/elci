@@ -62,6 +62,17 @@ This uses the straight.el build directory and excludes generated files."
     (cl-remove-if (lambda (file) (string-match-p "-autoloads\\.el$" file))
                   all-files)))
 
+(defun ci-load-optional-deps ()
+  "Load the project-specific `ci-deps.el` file, if it exists.
+This function locates the file in the project's `ci/` directory
+and adds that directory to the `load-path` before requiring the
+`ci-deps` feature. This makes external dependency recipes
+available to the current Emacs session."
+  (let ((project-ci-dir (expand-file-name "../ci")))
+    (when (file-exists-p (expand-file-name "ci-deps.el" project-ci-dir))
+      (add-to-list 'load-path project-ci-dir)
+      (require 'ci-deps))))
+
 (defun ci-install-package (pkg-name)
   "Ensure PKG-NAME is known to the current straight.el session.
 If it's already installed, this re-declares the package's recipe,
