@@ -38,10 +38,12 @@ needs to use straight.el's functions."
   "Return a list of \"-L /path\" arguments for PKG-NAME.
 This includes the package's build directory and all its dependencies.
 Optional EXTRA-DIRS can be provided to add more directories to the path."
+  (message "DEPS for %s are %s" pkg-name (straight-dependencies pkg-name))
   (let* ((build-dir (straight--build-dir pkg-name))
          (deps-dirs (mapcar #'straight--build-dir
                             (straight--flatten (straight-dependencies pkg-name))))
          (all-dirs (append extra-dirs deps-dirs (list build-dir))))
+    (message "DEPS DIRS for %s are %s" pkg-name deps-dirs)
     (mapcan (lambda (dir) (list "-L" dir)) all-dirs)))
 
 (defun ci-get-package-main-file (pkg-name)
