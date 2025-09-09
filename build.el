@@ -18,6 +18,8 @@ and return a shell-friendly exit code."
          (output-buffer (generate-new-buffer " *compilation-output*")))
 
     (message (format "--- Compiling %s ---" pkg-name))
+    (message (format "Default directory is %s ---" default-directory))
+    (message (format "Straight base dir is %s ---" straight-base-dir))
     (unwind-protect
         (let* ((args (append '("-Q" "--batch")
                              load-path-args
