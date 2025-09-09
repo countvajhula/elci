@@ -25,19 +25,7 @@
 ;; --- Install project packages ---
 (message "--- Installing project packages ---")
 
-(let ((repo-root (expand-file-name ".."))
-      (is-suite ci-project-name))
-  (dolist (pkg ci-packages)
-    (let* ((relative-dir (if is-suite pkg "."))
-           ;; For a package suite, each package is in a subdir named after it.
-           ;; For single-package repos, files are at the root.
-           (source-dir (expand-file-name relative-dir repo-root))
-           ;; Manually expand the glob into a list of files. The paths
-           ;; must be relative to the repo root for the :files keyword.
-           (files (mapcar (lambda (file) (file-relative-name file repo-root))
-                          (directory-files source-dir t "\\.el$"))))
-
-      (straight-use-package
-       `(,(intern pkg) :local-repo ,repo-root :files ,files)))))
+(dolist (pkg ci-packages)
+  (ci-install-package pkg))
 
 (message "--- Package installation complete ---")
