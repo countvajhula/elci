@@ -15,6 +15,28 @@ If non-nil, this indicates the project is a package suite, where
 each package's source files are in a subdirectory named after the
 package. If nil, it is treated as a single-package repository.")
 
+;; --- Optional remote repo info ---
+;; If the project is hosted on remote recipe repositories,
+;; then Straight would signal a warning that those recipes,
+;; which contain the host and repo, are incompatible with
+;; the ones used here in CI that use the local repo. Explicitly
+;; indicating the canonical host and repo resolves this ambiguity.
+;; It isn't necessary to specify this for packages that aren't listed
+;; on any remote recipe repository.
+(defconst ci-repo-host (getenv "CI_REPO_HOST")
+  "The Git hosting service, e.g., 'github', 'gitlab'.
+Read from the CI_REPO_HOST environment variable. If non-nil,
+this is used with `ci-repo-path` to resolve ambiguity with
+remote package archives.")
+
+(defconst ci-repo-path (getenv "CI_REPO_PATH")
+  "The path to the repository on the host, e.g., 'user/repo'.
+Read from the CI_REPO_PATH environment variable.")
+
+(when (xor ci-repo-host ci-repo-path)
+  (error "Both CI_REPO_HOST and CI_REPO_PATH must be set, or neither."))
+;; ---
+
 ;; If a project name is not specified, it cannot be a multi-package repository.
 (when (and (null ci-project-name) (> (length ci-packages) 1))
   (error "CI_PROJECT env var must be set for multi-package repositories"))
@@ -85,9 +107,30 @@ dependencies for this session."
          ;; Manually expand the glob into a list of files. The paths
          ;; must be relative to the repo root for the :files keyword.
          (files (mapcar (lambda (file) (file-relative-name file repo-root))
-                        (directory-files source-dir t "\\.el$"))))
+                        (directory-files source-dir t "\\.el$")))
+         ;; Base recipe for a local package.
+         (recipe `(,(intern pkg-name)
+                   :local-repo ,repo-root
+                   :files ,files)))
 
-    (straight-use-package
-     `(,(intern pkg-name) :local-repo ,repo-root :files ,files))))
+    ;; If the project's canonical remote repository is specified via
+    ;; env vars, add that information to the recipe. This resolves
+    ;; ambiguity with recipes from remote archives like MELPA.
+    ;;
+    ;; NOTE: It may be preferable if we could simply indicate to
+    ;; Straight that one recipe has priority over another, without
+    ;; requiring that they be consistent, or to suspend this
+    ;; validation in some way, so that setting these environment
+    ;; variables purely for the sake of suppressing this warning is
+    ;; not necessary. For example, these variables would need to be
+    ;; updated if the repo is ever moved, even though where it's
+    ;; hosted is irrelevant to the needs of CI (except if we are
+    ;; explicitly checking remote recipes and installability rather
+    ;; than self-consistency).
+    (when (and ci-repo-host ci-repo-path)
+      (setq recipe (append recipe `(:host ,(intern ci-repo-host)
+                                    :repo ,ci-repo-path))))
+
+    (straight-use-package recipe)))
 
 (provide 'helpers)
