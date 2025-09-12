@@ -36,6 +36,8 @@ and return a shell-friendly exit code."
          (load-path-args (delete-dups (append pkg-load-path-args runner-load-path-args)))
          (output-buffer (generate-new-buffer " *test-output*")))
 
+    ;; First, ensure the package and its dependencies are known to this session.
+    (ci-install-package pkg-name)
     (message (format "--- Testing %s ---" pkg-name))
 
     (if (not files-to-test)
