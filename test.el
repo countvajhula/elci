@@ -33,7 +33,7 @@ and return a shell-friendly exit code."
          ;; `straight/build` directory to the load-path. This is robust
          ;; because the `install` step is the single source of truth for
          ;; what packages are available.
-         (build-root (expand-file-name "build" straight-base-dir))
+         (build-root (expand-file-name "straight/build" straight-base-dir))
          (all-build-dirs (directory-files build-root t))
          (load-path-args (mapcan (lambda (dir)
                                    (when (file-directory-p dir)
