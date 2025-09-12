@@ -1,5 +1,5 @@
 ;; coverage.el
-;; This script runs the package's ERT tests with coverage reporting.
+;; This script runs the package's tests with coverage reporting.
 ;; It must be run *after* install.el has successfully completed.
 ;; -*- lexical-binding: t -*-
 
@@ -12,14 +12,14 @@
 (ci-load-straight)
 (ci-load-optional-deps)
 
-;; Install the test runner and coverage dependencies.
+;; Install the necessary dependencies for testing and coverage.
 (straight-use-package 'ert-runner)
 (straight-use-package 'undercover)
 
 
 ;; --- The Coverage Runner Tool ---
 (defun ci-coverage-package (pkg-name)
-  "Run ERT tests for PKG-NAME with coverage, print all output,
+  "Run ERT tests with coverage for PKG-NAME, print all output,
 and return a shell-friendly exit code."
   (let* ((repo-root (expand-file-name ".."))
          (is-suite ci-project-name)
@@ -28,7 +28,6 @@ and return a shell-friendly exit code."
          (test-dir (expand-file-name "test" source-dir))
          (files-to-test (when (file-directory-p test-dir)
                           (directory-files-recursively test-dir "\\-test\\.el$")))
-         ;; Add all installed packages to the load-path for a robust environment.
          (build-root (expand-file-name "straight/build" straight-base-dir))
          (all-build-dirs (directory-files build-root t))
          (load-path-args (mapcan (lambda (dir)
@@ -40,19 +39,26 @@ and return a shell-friendly exit code."
     (message (format "--- Running coverage for %s ---" pkg-name))
 
     (if (not files-to-test)
-        (progn (message "No tests found.") 0) ; Return success if no tests.
+        (progn (message "No tests found.") 0) ; Return success if no tests exist.
 
       (unwind-protect
-          ;; The command first loads `undercover`, then calls the `(undercover)`
-          ;; function to install its hooks, and finally loads `ert-runner`
-          ;; to run the tests. `undercover` automatically detects CI
-          ;; environment variables (like COVERALLS_REPO_TOKEN).
-          (let* ((args (append '("-Q" "--batch")
+          (let* ((undercover-config-env (getenv "UNDERCOVER_CONFIG"))
+                 ;; Construct a Lisp program to run in the subprocess.
+                 ;; This is more robust than passing many command-line flags.
+                 (program
+                  `(progn
+                     (require 'ert-runner)
+                     (require 'undercover)
+                     ;; If UNDERCOVER_CONFIG is set, read it and pass it to undercover.
+                     ;; Otherwise, call undercover without arguments for default behavior.
+                     ,(if undercover-config-env
+                          `(undercover (read ,undercover-config-env))
+                        `(undercover))
+                     ;; Now, run the tests.
+                     (apply #'ert-runner-run-tests-batch ',files-to-test)))
+                 (args (append '("-Q" "--batch")
                                load-path-args
-                               '("-l" "undercover")
-                               '("--eval" "(undercover)")
-                               '("-l" "ert-runner")
-                               files-to-test))
+                               (list "--eval" (format "%S" program))))
                  (exit-code (apply #'call-process
                                    (executable-find "emacs") nil output-buffer nil args)))
             (with-current-buffer output-buffer
