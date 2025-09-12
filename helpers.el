@@ -71,11 +71,13 @@ available to the current Emacs session."
       (add-to-list 'load-path project-ci-dir)
       (require 'ci-deps))))
 
-(defun ci-install-package (pkg-name)
+(defun ci-install-package (pkg-name &optional use-fork)
   "Ensure PKG-NAME is known to the current straight.el session.
 If it's already installed, this re-declares the package's recipe,
 which is idempotent but forces straight.el to re-analyze its
-dependencies for this session."
+dependencies for this session.
+If USE-FORK is non-nil, add `:fork t` to the recipe to
+resolve ambiguity with remote package archives."
   (let* ((repo-root (expand-file-name ".."))
          (is-suite ci-project-name)
          (relative-dir (if is-suite pkg-name "."))
@@ -85,10 +87,12 @@ dependencies for this session."
          ;; Manually expand the glob into a list of files. The paths
          ;; must be relative to the repo root for the :files keyword.
          (files (mapcar (lambda (file) (file-relative-name file repo-root))
-                        (directory-files source-dir t "\\.el$"))))
-
-    (straight-use-package
-     ;; Add `:fork t` to explicitly override any remote recipes.
-     `(,(intern pkg-name) :local-repo ,repo-root :files ,files :fork t))))
+                        (directory-files source-dir t "\\.el$")))
+         (recipe `(,(intern pkg-name) :local-repo ,repo-root :files ,files)))
+    ;; Add :fork t only when explicitly requested (typically when the
+    ;; packages are first installed, rather than only re-declared)
+    (when use-fork
+      (setq recipe (append recipe '(:fork t))))
+    (straight-use-package recipe)))
 
 (provide 'helpers)

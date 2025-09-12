@@ -23,6 +23,9 @@
 (message "--- Installing project packages ---")
 
 (dolist (pkg ci-packages)
-  (ci-install-package pkg))
+  ;; Call with `t` to enable `:fork t` for the initial install,
+  ;; which overrides any remote recipe archives that may host
+  ;; these packages.
+  (ci-install-package pkg t))
 
 (message "--- Package installation complete ---")
