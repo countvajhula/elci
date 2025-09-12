@@ -27,19 +27,17 @@ and return a shell-friendly exit code."
          (test-dir (expand-file-name "test" source-dir))
          (files-to-test (when (file-directory-p test-dir)
                           (directory-files-recursively test-dir "\\-test\\.el$")))
-         ;; --- MODIFIED LOGIC ---
-         ;; Instead of trying to resolve dependencies, which is fragile
-         ;; across CI steps, we will simply add every directory inside the
-         ;; `straight/build` directory to the load-path. This is robust
-         ;; because the `install` step is the single source of truth for
-         ;; what packages are available.
+         ;; Instead of trying to resolve dependencies, we will simply
+         ;; add every directory inside the `straight/build` directory
+         ;; to the load-path. This is robust because the `install`
+         ;; step is the single source of truth for what packages are
+         ;; available.
          (build-root (expand-file-name "straight/build" straight-base-dir))
          (all-build-dirs (directory-files build-root t))
          (load-path-args (mapcan (lambda (dir)
                                    (when (file-directory-p dir)
                                      (list "-L" (directory-file-name dir))))
                                  all-build-dirs))
-         ;; --- END MODIFIED LOGIC ---
          (output-buffer (generate-new-buffer " *test-output*")))
 
     (message (format "--- Testing %s ---" pkg-name))
