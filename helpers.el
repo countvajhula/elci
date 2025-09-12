@@ -88,6 +88,7 @@ dependencies for this session."
                         (directory-files source-dir t "\\.el$"))))
 
     (straight-use-package
-     `(,(intern pkg-name) :local-repo ,repo-root :files ,files))))
+     ;; Add `:fork t` to explicitly override any remote recipes.
+     `(,(intern pkg-name) :local-repo ,repo-root :files ,files :fork t))))
 
 (provide 'helpers)
