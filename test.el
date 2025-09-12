@@ -4,11 +4,11 @@
 ;; -*- lexical-binding: t -*-
 
 ;; Add the current directory (emacs-ci/) to the load-path so we can `require`
-;; other generic scripts like helpers.el.
+;; modules like ci.el.
 (add-to-list 'load-path ".")
 
 ;; Load the shared CI helper functions and constants.
-(require 'helpers)
+(require 'ci)
 (ci-load-straight)
 (ci-load-optional-deps)
 
