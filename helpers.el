@@ -83,7 +83,7 @@ This uses the straight.el build directory and excludes generated files."
      ;; definitive one, overriding any recipes found in remote archives
      ;; like MELPA and preventing "incompatible recipes" warnings.
      `(,(intern pkg-name)
-       :local-repo ,repo-out
+       :local-repo ,repo-root
        :files ,files
        :host github
        :repo "drym-org/symex.el"))))
