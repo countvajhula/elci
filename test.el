@@ -51,7 +51,7 @@ and return a shell-friendly exit code."
           (let* ((args (append '("-Q" "--batch")
                                load-path-args
                                '("-l" "ert-runner")
-                               '("-f" "ert-runner-run-tests-batch-and-exit")
+                               ;; The -f flag is not needed; ert-runner autoruns.
                                files-to-test))
                  (exit-code (apply #'call-process
                                    (executable-find "emacs") nil output-buffer nil args)))
