@@ -27,17 +27,21 @@ and return a shell-friendly exit code."
          (test-dir (expand-file-name "test" source-dir))
          (files-to-test (when (file-directory-p test-dir)
                           (directory-files-recursively test-dir "\\-test\\.el$")))
-         ;; Get the load path arguments for the package under test.
-         (pkg-load-path-args (ci-get-load-path-args pkg-name))
-         ;; Also get the load path arguments for the test runner itself,
-         ;; as it has its own dependencies (like s.el).
-         (runner-load-path-args (ci-get-load-path-args "ert-runner"))
-         ;; Combine them into a single list for the subprocess.
-         (load-path-args (delete-dups (append pkg-load-path-args runner-load-path-args)))
+         ;; --- MODIFIED LOGIC ---
+         ;; Instead of trying to resolve dependencies, which is fragile
+         ;; across CI steps, we will simply add every directory inside the
+         ;; `straight/build` directory to the load-path. This is robust
+         ;; because the `install` step is the single source of truth for
+         ;; what packages are available.
+         (build-root (expand-file-name "build" straight-base-dir))
+         (all-build-dirs (directory-files build-root t))
+         (load-path-args (mapcan (lambda (dir)
+                                   (when (file-directory-p dir)
+                                     (list "-L" (directory-file-name dir))))
+                                 all-build-dirs))
+         ;; --- END MODIFIED LOGIC ---
          (output-buffer (generate-new-buffer " *test-output*")))
 
-    ;; First, ensure the package and its dependencies are known to this session.
-    (ci-install-package pkg-name)
     (message (format "--- Testing %s ---" pkg-name))
 
     (if (not files-to-test)
