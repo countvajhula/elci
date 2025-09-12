@@ -4,7 +4,7 @@
 ;; -*- lexical-binding: t -*-
 
 ;; Load the shared CI helper functions and constants.
-(require 'helpers (expand-file-name "helpers.el"))
+(require 'ci (expand-file-name "ci.el"))
 (ci-load-straight)
 (ci-load-optional-deps)
 

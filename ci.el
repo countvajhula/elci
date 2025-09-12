@@ -1,4 +1,4 @@
-;; helpers.el
+;; ci.el
 ;; This script provides shared functions and constants for the CI process.
 ;; -*- lexical-binding: t -*-
 
@@ -133,4 +133,4 @@ dependencies for this session."
 
     (straight-use-package recipe)))
 
-(provide 'helpers)
+(provide 'ci)
