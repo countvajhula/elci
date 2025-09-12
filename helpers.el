@@ -61,38 +61,31 @@ This uses the straight.el build directory and excludes generated files."
                   all-files)))
 
 (defun ci-load-optional-deps ()
-  "Load the project-specific `ci-deps.el` file, if it exists.
-This function locates the file in the project's `ci/` directory
-and adds that directory to the `load-path` before requiring the
-`ci-deps` feature. This makes external dependency recipes
-available to the current Emacs session."
+  "Load the project-specific `ci-deps.el` file, if it exists."
   (let ((project-ci-dir (expand-file-name "../ci")))
     (when (file-exists-p (expand-file-name "ci-deps.el" project-ci-dir))
       (add-to-list 'load-path project-ci-dir)
       (require 'ci-deps))))
 
-(defun ci-install-package (pkg-name &optional use-fork)
-  "Ensure PKG-NAME is known to the current straight.el session.
-If it's already installed, this re-declares the package's recipe,
-which is idempotent but forces straight.el to re-analyze its
-dependencies for this session.
-If USE-FORK is non-nil, add `:fork t` to the recipe to
-resolve ambiguity with remote package archives."
+(defun ci-install-package (pkg-name)
+  "Ensure PKG-NAME is known to the current straight.el session."
   (let* ((repo-root (expand-file-name ".."))
          (is-suite ci-project-name)
          (relative-dir (if is-suite pkg-name "."))
-         ;; For a package suite, each package is in a subdir named after it.
-         ;; For single-package repos, files are at the root.
          (source-dir (expand-file-name relative-dir repo-root))
-         ;; Manually expand the glob into a list of files. The paths
-         ;; must be relative to the repo root for the :files keyword.
          (files (mapcar (lambda (file) (file-relative-name file repo-root))
-                        (directory-files source-dir t "\\.el$")))
-         (recipe `(,(intern pkg-name) :local-repo ,repo-root :files ,files)))
-    ;; Add :fork t only when explicitly requested (typically when the
-    ;; packages are first installed, rather than only re-declared)
-    (when use-fork
-      (setq recipe (append recipe '(:fork t))))
-    (straight-use-package recipe)))
+                        (directory-files source-dir t "\\.el$"))))
+
+    (straight-use-package
+     ;; By specifying the canonical remote repository information (:host, :repo)
+     ;; in addition to the `:local-repo`, we give straight.el a complete
+     ;; recipe. This unambiguously signals that our local version is the
+     ;; definitive one, overriding any recipes found in remote archives
+     ;; like MELPA and preventing "incompatible recipes" warnings.
+     `(,(intern pkg-name)
+       :local-repo ,repo-out
+       :files ,files
+       :host github
+       :repo "drym-org/symex.el"))))
 
 (provide 'helpers)
