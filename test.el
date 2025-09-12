@@ -27,8 +27,13 @@ and return a shell-friendly exit code."
          (test-dir (expand-file-name "test" source-dir))
          (files-to-test (when (file-directory-p test-dir)
                           (directory-files-recursively test-dir "\\-test\\.el$")))
-         (runner-dir (straight--build-dir "ert-runner"))
-         (load-path-args (ci-get-load-path-args pkg-name (list runner-dir)))
+         ;; Get the load path arguments for the package under test.
+         (pkg-load-path-args (ci-get-load-path-args pkg-name))
+         ;; Also get the load path arguments for the test runner itself,
+         ;; as it has its own dependencies (like s.el).
+         (runner-load-path-args (ci-get-load-path-args "ert-runner"))
+         ;; Combine them into a single list for the subprocess.
+         (load-path-args (delete-dups (append pkg-load-path-args runner-load-path-args)))
          (output-buffer (generate-new-buffer " *test-output*")))
 
     (message (format "--- Testing %s ---" pkg-name))
