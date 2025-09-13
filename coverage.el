@@ -51,7 +51,11 @@ and return a shell-friendly exit code."
                        ;; undercover will automatically read its configuration from
                        ;; the UNDERCOVER_CONFIG environment variable.
                        (undercover)
-                       (apply #'ert-runner-run-tests-batch ',files-to-test))))
+                       ;; Run the tests on the instrumented code.
+                       (apply #'ert-runner-run-tests-batch ',files-to-test)
+                       ;; Manually generate the report after the tests are done.
+                       ;; This is more robust than relying on shutdown hooks.
+                       (undercover-report))))
                  (args (append '("-Q" "--batch")
                                load-path-args
                                (list "--eval" (format "%S" program))))
@@ -74,3 +78,4 @@ and return a shell-friendly exit code."
   (if (zerop exit-code)
       (message "\nCoverage run completed successfully.")
     (kill-emacs exit-code)))
+
