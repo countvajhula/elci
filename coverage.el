@@ -36,7 +36,7 @@ and return a shell-friendly exit code."
 
     (let ((pkg-build-dir (straight--build-dir pkg-name)))
       (message (format "Cleaning compiled files in %s..." pkg-build-dir))
-      (dolist (file (directory-files-recursively pkg-build-dir "\\-elc$"))
+      (dolist (file (directory-files-recursively pkg-build-dir "\\.elc$"))
         (delete-file file)))
 
     (if (not files-to-test)
