@@ -36,6 +36,12 @@ and return a shell-friendly exit code."
 
     (message (format "--- Running coverage for %s ---" pkg-name))
 
+    (let ((pkg-build-dir (straight--build-dir pkg-name)))
+      (message (format "Cleaning compiled files in %s to ensure source is instrumented..."
+                       pkg-build-dir))
+      (dolist (file (directory-files-recursively pkg-build-dir "\\.elc$"))
+        (delete-file file)))
+
     (if (not files-to-test)
         (progn (message "No tests found.") 0)
 
@@ -43,22 +49,22 @@ and return a shell-friendly exit code."
           (let* ((undercover-config-env (getenv "UNDERCOVER_CONFIG"))
                  (program
                   `(progn
-                     ;; Set the working directory inside the subprocess to the
-                     ;; project root. This ensures that relative paths in the
-                     ;; undercover config are resolved correctly.
                      (let ((default-directory ,repo-root))
-                       ;; Tell Emacs to prefer source .el files over compiled
-                       ;; .elc files. This is essential for undercover's
-                       ;; instrumentation to work.
-                       (setq load-prefer-newer nil)
+                       ;; --- DEBUGGING LOGS ---
+                       (message "--- Subprocess Context ---")
+                       (message "  - Working Directory: %s" default-directory)
+                       (message "  - UNDERCOVER_CONFIG env var: %S" ,undercover-config-env)
+                       ;; ------------------------
                        (require 'ert-runner)
                        (require 'undercover)
-                       ;; If UNDERCOVER_CONFIG is set, read and use it.
-                       ;; Otherwise, use undercover's default behavior (for Coveralls).
                        ,(if undercover-config-env
-                            `(undercover (read ,undercover-config-env))
+                            `(progn
+                               (message "  - Reading UNDERCOVER_CONFIG...")
+                               (undercover (read ,undercover-config-env)))
                           `(undercover))
-                       ;; Now, run the tests on the instrumented code.
+                       ;; --- MORE DEBUGGING ---
+                       (message "  - Instrumented files list: %S" undercover-instrumented-files)
+                       ;; ----------------------
                        (apply #'ert-runner-run-tests-batch ',files-to-test))))
                  (args (append '("-Q" "--batch")
                                load-path-args
