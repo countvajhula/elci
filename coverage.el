@@ -67,7 +67,7 @@ and return a shell-friendly exit code."
               (princ (buffer-string)))
             exit-code)
         (when (buffer-live-p output-buffer)
-          (kill-buffer output-buffer))))))
+          (kill-buffer output-buffer)))))
 
 
 ;; --- Main Execution ---
