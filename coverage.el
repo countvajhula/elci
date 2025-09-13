@@ -57,7 +57,7 @@ and return a shell-friendly exit code."
                      (apply #'ert-runner-run-tests-batch ',files-to-test)
                      ;; Manually generate the report after the tests are done.
                      ;; This is more robust than relying on shutdown hooks.
-                     (undercover-report))))
+                     (undercover-report)))
                  (args (append '("-Q" "--batch")
                                load-path-args
                                (list "--eval" (format "%S" program))))
@@ -67,7 +67,7 @@ and return a shell-friendly exit code."
               (princ (buffer-string)))
             exit-code)
         (when (buffer-live-p output-buffer)
-          (kill-buffer output-buffer)))))
+          (kill-buffer output-buffer))))))
 
 
 ;; --- Main Execution ---
@@ -80,3 +80,4 @@ and return a shell-friendly exit code."
   (if (zerop exit-code)
       (message "\nCoverage run completed successfully.")
     (kill-emacs exit-code)))
+
