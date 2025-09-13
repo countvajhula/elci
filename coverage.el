@@ -26,19 +26,17 @@ and return a shell-friendly exit code."
                           (directory-files-recursively test-dir "\\-test\\.el$")))
          (build-root (expand-file-name "straight/build" straight-base-dir))
          (all-build-dirs (directory-files build-root t))
-         ;; The load-path MUST include the repo-root itself so that the
-         ;; instrumented source files can be found and required by the tests.
          (load-path-args (mapcan (lambda (dir)
                                    (when (file-directory-p dir)
                                      (list "-L" (directory-file-name dir))))
                                  (append (list repo-root) all-build-dirs)))
-         (output-buffer (generate-new-buffer " *coverage-output*")))
+         (output-buffer (generate-new-buffer " *coverage-output*"))
+         (undercover-config-env (getenv "UNDERCOVER_CONFIG")))
 
     (message (format "--- Running coverage for %s ---" pkg-name))
 
     (let ((pkg-build-dir (straight--build-dir pkg-name)))
-      (message (format "Cleaning compiled files in %s to ensure source is instrumented..."
-                       pkg-build-dir))
+      (message (format "Cleaning compiled files in %s..." pkg-build-dir))
       (dolist (file (directory-files-recursively pkg-build-dir "\\.elc$"))
         (delete-file file)))
 
@@ -46,24 +44,17 @@ and return a shell-friendly exit code."
         (progn (message "No tests found.") 0)
 
       (unwind-protect
-          (let* ((undercover-config-env (getenv "UNDERCOVER_CONFIG"))
-                 (program
-                  `(progn
-                     (let ((default-directory ,repo-root))
-                       (require 'ert-runner)
-                       (require 'undercover)
-                       ,(if undercover-config-env
-                            `(undercover (read ,undercover-config-env))
-                          `(undercover))
-                       (apply #'ert-runner-run-tests-batch ',files-to-test)
-                       ;; --- FINAL DEBUGGING STEP ---
-                       ;; Use `princ` to print directly to stdout, bypassing
-                       ;; any suppression by ert-runner.
-                       (princ "\n--- Final Coverage Data ---\n")
-                       (princ (format "%S\n" undercover-coverage-data)))))
+          (let* ((undercover-setup
+                  ;; Construct the --eval expression to configure undercover.
+                  (when undercover-config-env
+                    (list "--eval"
+                          (format "(progn (require 'undercover) (undercover (read %S)))"
+                                  undercover-config-env))))
                  (args (append '("-Q" "--batch")
                                load-path-args
-                               (list "--eval" (format "%S" program))))
+                               undercover-setup
+                               '("-l" "ert-runner")
+                               files-to-test))
                  (exit-code (apply #'call-process
                                    (executable-find "emacs") nil output-buffer nil args)))
             (with-current-buffer output-buffer
