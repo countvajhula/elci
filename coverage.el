@@ -30,8 +30,7 @@ and return a shell-friendly exit code."
                                    (when (file-directory-p dir)
                                      (list "-L" (directory-file-name dir))))
                                  (append (list repo-root) all-build-dirs)))
-         (output-buffer (generate-new-buffer " *coverage-output*"))
-         (undercover-config-env (getenv "UNDERCOVER_CONFIG")))
+         (output-buffer (generate-new-buffer " *coverage-output*")))
 
     (message (format "--- Running coverage for %s ---" pkg-name))
 
@@ -44,17 +43,18 @@ and return a shell-friendly exit code."
         (progn (message "No tests found.") 0)
 
       (unwind-protect
-          (let* ((undercover-setup
-                  ;; Construct the --eval expression to configure undercover.
-                  (when undercover-config-env
-                    (list "--eval"
-                          (format "(progn (require 'undercover) (undercover (read %S)))"
-                                  undercover-config-env))))
+          (let* ((program
+                  `(progn
+                     (let ((default-directory ,repo-root))
+                       (require 'ert-runner)
+                       (require 'undercover)
+                       ;; undercover will automatically read its configuration from
+                       ;; the UNDERCOVER_CONFIG environment variable.
+                       (undercover)
+                       (apply #'ert-runner-run-tests-batch ',files-to-test))))
                  (args (append '("-Q" "--batch")
                                load-path-args
-                               undercover-setup
-                               '("-l" "ert-runner")
-                               files-to-test))
+                               (list "--eval" (format "%S" program))))
                  (exit-code (apply #'call-process
                                    (executable-find "emacs") nil output-buffer nil args)))
             (with-current-buffer output-buffer
