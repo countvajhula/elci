@@ -3,16 +3,15 @@
 ;; It must be run *after* install.el has successfully completed.
 ;; -*- lexical-binding: t -*-
 
-;; Add the current directory (emacs-ci/) to the load-path so we can `require`
-;; other generic scripts like ci.el.
+;; Add the current directory (emacs-ci/) to the load-path.
 (add-to-list 'load-path ".")
 
-;; Load the shared CI helper functions and constants.
+;; Load shared helpers and dependencies.
 (require 'ci)
 (ci-load-straight)
 (ci-load-optional-deps)
 
-;; Install the test runner and coverage dependencies.
+;; Install the necessary dependencies for testing and coverage.
 (straight-use-package 'ert-runner)
 (straight-use-package 'undercover)
 
@@ -26,27 +25,25 @@ and return a shell-friendly exit code."
          (relative-dir (if is-suite pkg-name "."))
          (source-dir (expand-file-name relative-dir repo-root))
          (test-dir (expand-file-name "test" source-dir))
+         ;; Use the robust recursive search to find all test files.
          (files-to-test (when (file-directory-p test-dir)
                           (directory-files-recursively test-dir "\\-test\\.el$")))
-         ;; Add all installed packages to the load-path for a robust environment.
          (build-root (expand-file-name "straight/build" straight-base-dir))
          (all-build-dirs (directory-files build-root t))
          (load-path-args (mapcan (lambda (dir)
                                    (when (file-directory-p dir)
                                      (list "-L" (directory-file-name dir))))
-                                 all-build-dirs))
+                                 (append (list repo-root) all-build-dirs)))
          (output-buffer (generate-new-buffer " *coverage-output*")))
 
     (message (format "--- Running coverage for %s ---" pkg-name))
 
     (if (not files-to-test)
-        (progn (message "No tests found.") 0) ; Return success if no tests.
+        (progn (message "No tests found.") 0) ; Return success if no tests exist.
 
       (unwind-protect
-          ;; The command first loads `undercover`, then calls the `(undercover)`
-          ;; function to install its hooks, and finally loads `ert-runner`
-          ;; to run the tests. `undercover` automatically detects CI
-          ;; environment variables (like COVERALLS_REPO_TOKEN).
+          ;; This command uses the canonical, hook-based invocation pattern that
+          ;; undercover.el and ert-runner.el are designed for.
           (let* ((args (append '("-Q" "--batch")
                                load-path-args
                                '("-l" "undercover")
@@ -72,3 +69,4 @@ and return a shell-friendly exit code."
   (if (zerop exit-code)
       (message "\nCoverage run completed successfully.")
     (kill-emacs exit-code)))
+
