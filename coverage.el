@@ -3,19 +3,15 @@
 ;; It must be run *after* install.el has successfully completed.
 ;; -*- lexical-binding: t -*-
 
-;; Add the current directory (emacs-ci/) to the load-path so we can `require`
-;; other generic scripts like ci.el.
+;; Add the current directory (emacs-ci/) to the load-path.
 (add-to-list 'load-path ".")
 
-;; Load the shared CI helper functions and constants.
+;; Load shared helpers and dependencies.
 (require 'ci)
 (ci-load-straight)
 (ci-load-optional-deps)
-
-;; Install the necessary dependencies for testing and coverage.
 (straight-use-package 'ert-runner)
 (straight-use-package 'undercover)
-
 
 ;; --- The Coverage Runner Tool ---
 (defun ci-coverage-package (pkg-name)
@@ -30,32 +26,40 @@ and return a shell-friendly exit code."
                           (directory-files-recursively test-dir "\\-test\\.el$")))
          (build-root (expand-file-name "straight/build" straight-base-dir))
          (all-build-dirs (directory-files build-root t))
+         ;; The load-path MUST include the repo-root itself so that the
+         ;; instrumented source files can be found and required by the tests.
          (load-path-args (mapcan (lambda (dir)
                                    (when (file-directory-p dir)
                                      (list "-L" (directory-file-name dir))))
-                                 all-build-dirs))
+                                 (append (list repo-root) all-build-dirs)))
          (output-buffer (generate-new-buffer " *coverage-output*")))
 
     (message (format "--- Running coverage for %s ---" pkg-name))
 
     (if (not files-to-test)
-        (progn (message "No tests found.") 0) ; Return success if no tests exist.
+        (progn (message "No tests found.") 0)
 
       (unwind-protect
           (let* ((undercover-config-env (getenv "UNDERCOVER_CONFIG"))
-                 ;; Construct a Lisp program to run in the subprocess.
-                 ;; This is more robust than passing many command-line flags.
                  (program
                   `(progn
-                     (require 'ert-runner)
-                     (require 'undercover)
-                     ;; If UNDERCOVER_CONFIG is set, read it and pass it to undercover.
-                     ;; Otherwise, call undercover without arguments for default behavior.
-                     ,(if undercover-config-env
-                          `(undercover (read ,undercover-config-env))
-                        `(undercover))
-                     ;; Now, run the tests.
-                     (apply #'ert-runner-run-tests-batch ',files-to-test)))
+                     ;; Set the working directory inside the subprocess to the
+                     ;; project root. This ensures that relative paths in the
+                     ;; undercover config are resolved correctly.
+                     (let ((default-directory ,repo-root))
+                       ;; Tell Emacs to prefer source .el files over compiled
+                       ;; .elc files. This is essential for undercover's
+                       ;; instrumentation to work.
+                       (setq load-prefer-newer nil)
+                       (require 'ert-runner)
+                       (require 'undercover)
+                       ;; If UNDERCOVER_CONFIG is set, read and use it.
+                       ;; Otherwise, use undercover's default behavior (for Coveralls).
+                       ,(if undercover-config-env
+                            `(undercover (read ,undercover-config-env))
+                          `(undercover))
+                       ;; Now, run the tests on the instrumented code.
+                       (apply #'ert-runner-run-tests-batch ',files-to-test))))
                  (args (append '("-Q" "--batch")
                                load-path-args
                                (list "--eval" (format "%S" program))))
@@ -78,3 +82,4 @@ and return a shell-friendly exit code."
   (if (zerop exit-code)
       (message "\nCoverage run completed successfully.")
     (kill-emacs exit-code)))
+
