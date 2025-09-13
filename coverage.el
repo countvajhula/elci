@@ -57,10 +57,10 @@ and return a shell-friendly exit code."
                           `(undercover))
                        (apply #'ert-runner-run-tests-batch ',files-to-test)
                        ;; --- FINAL DEBUGGING STEP ---
-                       ;; Inspect the collected data before the process exits.
-                       ;; This will tell us if data is being collected for all files.
-                       (message "--- Final Coverage Data ---")
-                       (message "%S" undercover-coverage-data))))
+                       ;; Use `princ` to print directly to stdout, bypassing
+                       ;; any suppression by ert-runner.
+                       (princ "\n--- Final Coverage Data ---\n")
+                       (princ (format "%S\n" undercover-coverage-data)))))
                  (args (append '("-Q" "--batch")
                                load-path-args
                                (list "--eval" (format "%S" program))))
@@ -83,4 +83,3 @@ and return a shell-friendly exit code."
   (if (zerop exit-code)
       (message "\nCoverage run completed successfully.")
     (kill-emacs exit-code)))
-
