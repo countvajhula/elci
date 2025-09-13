@@ -46,8 +46,13 @@ and return a shell-friendly exit code."
           ;; This command uses the canonical, hook-based invocation pattern and
           ;; passes the test directory as an argument, allowing ert-runner to
           ;; handle test discovery itself.
-          (let* ((args (append '("-Q" "--batch")
+          (let* ((debug-program
+                  `(message "--- Subprocess Context ---\n  - CWD: %s\n  - Args: %S\n  - Load Path: %S"
+                            default-directory command-line-args-left load-path))
+                 (args (append '("-Q" "--batch")
                                load-path-args
+                               ;; Add the debug printer first.
+                               (list "--eval" (format "%S" debug-program))
                                '("--eval" "(setq load-prefer-newer nil)")
                                '("-l" "undercover")
                                '("--eval" "(undercover)")
