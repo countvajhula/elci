@@ -22,8 +22,6 @@ and return a shell-friendly exit code."
          (relative-dir (if is-suite pkg-name "."))
          (source-dir (expand-file-name relative-dir repo-root))
          (test-dir (expand-file-name "test" source-dir))
-         (files-to-test (when (file-directory-p test-dir)
-                          (directory-files-recursively test-dir "\\-test\\.el$")))
          (build-root (expand-file-name "straight/build" straight-base-dir))
          (all-build-dirs (directory-files build-root t))
          ;; The load-path MUST include the repo-root for instrumentation.
@@ -41,8 +39,13 @@ and return a shell-friendly exit code."
 
     (message (format "--- Running coverage for %s ---" pkg-name))
 
-    (if (not files-to-test)
-        (progn (message "No tests found.") 0)
+    (let ((pkg-build-dir (straight--build-dir pkg-name)))
+      (message (format "Cleaning compiled files in %s..." pkg-build-dir))
+      (dolist (file (directory-files-recursively pkg-build-dir "\\.elc$"))
+        (delete-file file)))
+
+    (if (not (file-directory-p test-dir))
+        (progn (message "No test directory found.") 0)
 
       (unwind-protect
           (let* ((program
@@ -53,8 +56,9 @@ and return a shell-friendly exit code."
                      ;; undercover will automatically read its configuration from
                      ;; the UNDERCOVER_CONFIG environment variable.
                      (undercover)
-                     ;; Run the tests on the instrumented code.
-                     (apply #'ert-runner-run-tests-batch ',files-to-test)
+                     ;; Run the tests by pointing to the test directory.
+                     ;; This is more robust for undercover's instrumentation.
+                     (ert-runner-run-tests-batch ,test-dir)
                      ;; Manually generate the report after the tests are done.
                      (undercover-report)))
                  (args (append '("-Q" "--batch")
