@@ -50,22 +50,17 @@ and return a shell-friendly exit code."
                  (program
                   `(progn
                      (let ((default-directory ,repo-root))
-                       ;; --- DEBUGGING LOGS ---
-                       (message "--- Subprocess Context ---")
-                       (message "  - Working Directory: %s" default-directory)
-                       (message "  - UNDERCOVER_CONFIG env var: %S" ,undercover-config-env)
-                       ;; ------------------------
                        (require 'ert-runner)
                        (require 'undercover)
                        ,(if undercover-config-env
-                            `(progn
-                               (message "  - Reading UNDERCOVER_CONFIG...")
-                               (undercover (read ,undercover-config-env)))
+                            `(undercover (read ,undercover-config-env))
                           `(undercover))
-                       ;; --- MORE DEBUGGING ---
-                       (message "  - Instrumented files list: %S" undercover-instrumented-files)
-                       ;; ----------------------
-                       (apply #'ert-runner-run-tests-batch ',files-to-test))))
+                       (apply #'ert-runner-run-tests-batch ',files-to-test)
+                       ;; --- FINAL DEBUGGING STEP ---
+                       ;; Inspect the collected data before the process exits.
+                       ;; This will tell us if data is being collected for all files.
+                       (message "--- Final Coverage Data ---")
+                       (message "%S" undercover-coverage-data))))
                  (args (append '("-Q" "--batch")
                                load-path-args
                                (list "--eval" (format "%S" program))))
@@ -88,3 +83,4 @@ and return a shell-friendly exit code."
   (if (zerop exit-code)
       (message "\nCoverage run completed successfully.")
     (kill-emacs exit-code)))
+
