@@ -36,7 +36,7 @@ and return a shell-friendly exit code."
 
     (let ((pkg-build-dir (straight--build-dir pkg-name)))
       (message (format "Cleaning compiled files in %s..." pkg-build-dir))
-      (dolist (file (directory-files-recursively pkg-build-dir "\\.elc$"))
+      (dolist (file (directory-files-recursively pkg-build-dir "\\-elc$"))
         (delete-file file)))
 
     (if (not files-to-test)
@@ -45,17 +45,19 @@ and return a shell-friendly exit code."
       (unwind-protect
           (let* ((program
                   `(progn
-                     (let ((default-directory ,repo-root))
-                       (require 'ert-runner)
-                       (require 'undercover)
-                       ;; undercover will automatically read its configuration from
-                       ;; the UNDERCOVER_CONFIG environment variable.
-                       (undercover)
-                       ;; Run the tests on the instrumented code.
-                       (apply #'ert-runner-run-tests-batch ',files-to-test)
-                       ;; Manually generate the report after the tests are done.
-                       ;; This is more robust than relying on shutdown hooks.
-                       (undercover-report))))
+                     ;; Set the working directory for the entire subprocess.
+                     ;; This is crucial for undercover's report generation.
+                     (cd ,repo-root)
+                     (require 'ert-runner)
+                     (require 'undercover)
+                     ;; undercover will automatically read its configuration from
+                     ;; the UNDERCOVER_CONFIG environment variable.
+                     (undercover)
+                     ;; Run the tests on the instrumented code.
+                     (apply #'ert-runner-run-tests-batch ',files-to-test)
+                     ;; Manually generate the report after the tests are done.
+                     ;; This is more robust than relying on shutdown hooks.
+                     (undercover-report))))
                  (args (append '("-Q" "--batch")
                                load-path-args
                                (list "--eval" (format "%S" program))))
@@ -78,4 +80,3 @@ and return a shell-friendly exit code."
   (if (zerop exit-code)
       (message "\nCoverage run completed successfully.")
     (kill-emacs exit-code)))
-
