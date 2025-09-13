@@ -46,19 +46,14 @@ and return a shell-friendly exit code."
           ;; This command uses the canonical, hook-based invocation pattern and
           ;; passes the test directory as an argument, allowing ert-runner to
           ;; handle test discovery itself.
-          (let* ((debug-program
-                  `(message "--- Subprocess Context ---\n  - CWD: %s\n  - Args: %S\n  - Load Path: %S"
-                            default-directory command-line-args-left load-path))
-                 (args (append '("-Q" "--batch")
+          (let* ((args (append '("-Q" "--batch")
                                load-path-args
-                               ;; Add the debug printer first.
-                               (list "--eval" (format "%S" debug-program))
+                               ;; Set the working directory for the subprocess.
+                               (list "--eval" (format "(cd %S)" repo-root))
                                '("--eval" "(setq load-prefer-newer nil)")
                                '("-l" "undercover")
                                '("--eval" "(undercover)")
-                               '("-l" "ert-runner")
-                               ;; Pass the test directory as an argument.
-                               (list test-dir)))
+                               '("-l" "ert-runner")))
                  (exit-code (apply #'call-process
                                    (executable-find "emacs") nil output-buffer nil args)))
             (with-current-buffer output-buffer
