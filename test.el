@@ -25,13 +25,7 @@ and return a shell-friendly exit code."
          (relative-dir (if is-suite pkg-name "."))
          (source-dir (expand-file-name relative-dir repo-root))
          (test-dir (expand-file-name "test" source-dir))
-         (files-to-test (when (file-directory-p test-dir)
-                          (directory-files-recursively test-dir "\\-test\\.el$")))
-         ;; Instead of trying to resolve dependencies, we will simply
-         ;; add every directory inside the `straight/build` directory
-         ;; to the load-path. This is robust because the `install`
-         ;; step is the single source of truth for what packages are
-         ;; available.
+         ;; Add all installed packages to the load-path for a robust environment.
          (build-root (expand-file-name "straight/build" straight-base-dir))
          (all-build-dirs (directory-files build-root t))
          (load-path-args (mapcan (lambda (dir)
@@ -42,15 +36,17 @@ and return a shell-friendly exit code."
 
     (message (format "--- Testing %s ---" pkg-name))
 
-    (if (not files-to-test)
+    (if (not (file-directory-p test-dir))
         (progn (message "No tests found.") 0) ; Return success if no tests exist.
 
       (unwind-protect
+          ;; Change the CWD to the project root and let ert-runner
+          ;; auto-discover the `test/` directory.
           (let* ((args (append '("-Q" "--batch")
                                load-path-args
-                               '("-l" "ert-runner")
-                               ;; The -f flag is not needed; ert-runner autoruns.
-                               files-to-test))
+                               ;; Set the working directory for the subprocess.
+                               (list "--eval" (format "(cd %S)" repo-root))
+                               '("-l" "ert-runner")))
                  (exit-code (apply #'call-process
                                    (executable-find "emacs") nil output-buffer nil args)))
             (with-current-buffer output-buffer
