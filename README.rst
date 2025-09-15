@@ -7,7 +7,7 @@ This can be used in any ELisp project on any CI host. The project itself need no
 
 Emacs CI uses Straight.el to install packages and their dependencies using any recipes you specify. The specific CI steps also use package-lint and checkdoc (for linting), and ert-runner and undercover (for tests and coverage reports).
 
-All of these steps take effect in the ``emacs-ci/init/`` folder within project repo. As they do not interfere with system Emacs configuration and are fully self-contained, you can run these both locally as well as on CI services such as GitHub Actions.
+All of these steps take effect in the ``.emacs-ci.clone/init/`` folder within project repo. As they do not interfere with system Emacs configuration and are fully self-contained, you can run these both locally as well as on CI services such as GitHub Actions.
 
 How to Use It
 -------------
@@ -21,12 +21,14 @@ In your CI workflow, clone the repo into your repo's root path.
 
 .. code-block:: bash
 
-  git clone https://github.com/countvajhula/emacs-ci.git
+  git clone https://github.com/countvajhula/emacs-ci.git .emacs-ci.clone
+
+It's advisable to use a dot-prefixed name for the cloned folder so that its contents will be ignored by Emacs when it searches for ELisp modules during initialization.
 
 2. (Optional) Declare External Dependencies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you have any external project dependencies that aren't listed on package archives, add ``straight-use-package`` declarations for them in a ``<repo-root>/ci/ci-deps.el`` ELisp module that's checked into your repo. This module, if present, will be loaded before installing your project packages. For example:
+If you have any external project dependencies that aren't listed on package archives, add ``straight-use-package`` declarations for them in a ``<repo-root>/.emacs-ci/ci-deps.el`` ELisp module that's checked into your repo. This module, if present, will be loaded before installing your project packages. For example:
 
 .. code-block:: bash
 
@@ -71,7 +73,7 @@ Emacs CI includes the following modules:
 
 .. code-block:: bash
 
-  cd emacs-ci && emacs --batch --quick --load lint.el
+  cd .emacs-ci.clone && emacs --batch --quick --load lint.el
 
 Sample Makefiles and Workflows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
