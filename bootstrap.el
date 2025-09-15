@@ -1,10 +1,10 @@
 ;; bootstrap.el
-;; This script bootstraps straight.el into the ci-init/ directory.
+;; This script bootstraps straight.el into the init/ directory.
 ;; It should be run once, before any other CI script.
 ;; -*- lexical-binding: t -*-
 
 ;; all CI scripts must see this value when they are loaded
-(defvar straight-base-dir (expand-file-name "ci-init"))
+(defvar straight-base-dir (expand-file-name "init"))
 
 (message "--- Bootstrapping straight.el ---")
 

@@ -49,12 +49,12 @@ needs to use straight.el's functions."
   (let ((bootstrap-file
          (expand-file-name
           "straight/repos/straight.el/bootstrap.el"
-          (expand-file-name "ci-init"))))
+          (expand-file-name "init"))))
     (unless (file-exists-p bootstrap-file)
       (error "straight.el not found. Run bootstrap.el first."))
     (load bootstrap-file nil 'nomessage)
     ;; ensure all CI scripts use the local init path
-    (setq straight-base-dir (expand-file-name "ci-init"))))
+    (setq straight-base-dir (expand-file-name "init"))))
 
 (defun ci-get-load-path-args (pkg-name &optional extra-dirs)
   "Return a list of \"-L /path\" arguments for PKG-NAME.
