@@ -15,6 +15,9 @@ If non-nil, this indicates the project is a package suite, where
 each package's source files are in a subdirectory named after the
 package. If nil, it is treated as a single-package repository.")
 
+(defconst ci-project-config-path "../.emacs-ci"
+  "The path where project-specific config is defined by the client.")
+
 ;; --- Optional remote repo info ---
 ;; If the project is hosted on remote recipe repositories,
 ;; then Straight would signal a warning that those recipes,
@@ -88,7 +91,7 @@ This function locates the file in the project's `ci/` directory
 and adds that directory to the `load-path` before requiring the
 `ci-deps` feature. This makes external dependency recipes
 available to the current Emacs session."
-  (let ((project-ci-dir (expand-file-name "../ci")))
+  (let ((project-ci-dir (expand-file-name ci-project-config-path)))
     (when (file-exists-p (expand-file-name "ci-deps.el" project-ci-dir))
       (add-to-list 'load-path project-ci-dir)
       (require 'ci-deps))))
