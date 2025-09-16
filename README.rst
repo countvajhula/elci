@@ -23,7 +23,7 @@ In your CI workflow, clone the repo into your repo's root path.
 
   git clone https://github.com/countvajhula/emacs-ci.git .emacs-ci.clone
 
-It's advisable to use a dot-prefixed name for the cloned folder so that its contents will be ignored by Emacs when it searches for ELisp modules during initialization.
+It's advisable to use a dot-prefixed name for the cloned folder so that its contents will be ignored by Emacs when it searches for ELisp modules in your project directory during initialization.
 
 2. (Optional) Declare External Dependencies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
