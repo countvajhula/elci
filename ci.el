@@ -15,8 +15,8 @@ If non-nil, this indicates the project is a package suite, where
 each package's source files are in a subdirectory named after the
 package. If nil, it is treated as a single-package repository.")
 
-(defconst ci-project-config-path "../.emacs-ci"
-  "The path where project-specific config is defined by the client.")
+(defconst ci-project-config-path "../.ci"
+  "The path where project-specific CI config is defined by the client.")
 
 ;; --- Optional remote repo info ---
 ;; If the project is hosted on remote recipe repositories,
