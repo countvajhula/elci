@@ -63,8 +63,8 @@ Emacs CI includes the following modules:
 
 - ``bootstrap``
 - ``install``
-- ``build`` (byte-compile your project)
-- ``native-build`` (native-compile your project)
+- ``byte-compile``
+- ``native-compile``
 - ``lint``
 - ``checkdoc``
 - ``test``

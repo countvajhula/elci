@@ -14,7 +14,8 @@
 ;;  2. doesn't check availability of dependencies on package archives
 ;;     as these packages may not be on such archives (and the
 ;;     installation and building of these dependencies is already
-;;     checked in preceding CI checks, i.e., install.el and build.el).
+;;     checked in preceding CI checks, i.e., install.el and
+;;     byte-compile.el).
 (straight-use-package
  '(package-lint :host github :repo "countvajhula/package-lint" :branch "control-which-checks-to-run"))
 
