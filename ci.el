@@ -15,6 +15,10 @@ If non-nil, this indicates the project is a package suite, where
 each package's source files are in a subdirectory named after the
 package. If nil, it is treated as a single-package repository.")
 
+(defconst ci-lisp-dir (getenv "CI_LISP_DIR")
+  "Where to find the source modules in this project.
+If nil, this assumes the root folder.")
+
 (defconst ci-project-config-path "../.ci"
   "The path where project-specific CI config is defined by the client.")
 
@@ -103,9 +107,10 @@ which is idempotent but forces straight.el to re-analyze its
 dependencies for this session."
   (let* ((repo-root (expand-file-name ".."))
          (is-suite ci-project-name)
-         (relative-dir (if is-suite pkg-name "."))
+         (relative-dir (if is-suite pkg-name ci-lisp-dir))
          ;; For a package suite, each package is in a subdir named after it.
-         ;; For single-package repos, files are at the root.
+         ;; For single-package repos, files are in the "lisp dir,"
+         ;; typically the root.
          (source-dir (expand-file-name relative-dir repo-root))
          ;; Manually expand the glob into a list of files. The paths
          ;; must be relative to the repo root for the :files keyword.

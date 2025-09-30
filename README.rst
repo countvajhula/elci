@@ -51,10 +51,13 @@ You'll need the following environment variables. Set them either in your Makefil
   export CI_PACKAGES=<package-1> <package-2> ...
   export CI_REPO_HOST=<github/gitlab/etc>
   export CI_REPO_PATH=<your-account/your-project>
+  export CI_LISP_DIR=<path-to-sources>
 
 ``CI_PROJECT`` can be left out if there's just one package (the most common case). If there are multiple packages, they are each expected to be in correspondingly-named folders at the top level of your repo. If you have just one package, the modules are expected to be directly at the top level of the repo, unless you also declare the ``CI_PROJECT`` variable, in which case it will look for the package in a folder of the same name at the top level.
 
 If your packages are listed on package archives like ELPA, ``CI_REPO_HOST`` and ``CI_REPO_PATH`` tell Emacs CI the canonical locations of your packages, which allows Straight to validate them.
+
+``CI_LISP_DIR`` by default assumes the root folder of the repo and typically does not need to be set. You might have your source files in a folder like ``lisp``, however, and in that case, you would set this to ``lisp``. This variable is ignored if ``CI_PROJECT`` is set.
 
 4. Run the CI Modules You Need
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
