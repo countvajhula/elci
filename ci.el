@@ -107,7 +107,9 @@ which is idempotent but forces straight.el to re-analyze its
 dependencies for this session."
   (let* ((repo-root (expand-file-name ".."))
          (is-suite ci-project-name)
-         (relative-dir (if is-suite pkg-name ci-lisp-dir))
+         (relative-dir (if is-suite
+                           pkg-name
+                         (or ci-lisp-dir ".")))
          ;; For a package suite, each package is in a subdir named after it.
          ;; For single-package repos, files are in the "lisp dir,"
          ;; typically the root.
