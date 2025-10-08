@@ -1,23 +1,25 @@
 emacs-ci
 ========
 
-Basic Continuous Integration (CI) for Emacs projects.
+Self-contained Continuous Integration (CI) for Emacs projects.
 
-This can be used in any ELisp project on any CI host. The project itself need not be on a package archive like ELPA, and its external dependencies need not be on package archives either, as long as you specify where they can be found using a package recipe.
+.. contents:: :depth: 2
 
-Emacs CI uses Straight.el to install packages and their dependencies using any recipes you specify. The specific CI steps also use package-lint and checkdoc (for linting), and ert-runner and undercover (for tests and coverage reports).
+This can be used in any ELisp project on any CI host. Your project itself need not be on a package archive like ELPA, and its external dependencies need not be on package archives either, as long as you specify where they can be found using a package recipe.
 
-All of these steps take effect in the ``.emacs-ci/init/`` folder within project repo. As they do not interfere with system Emacs configuration and are fully self-contained, you can run these both locally as well as on CI services such as GitHub Actions.
+Emacs CI uses Straight.el to install packages and their dependencies using any recipes you specify. The specific CI steps also use ``package-lint`` and ``checkdoc`` (for linting), and ``ert-runner`` and ``undercover`` (for tests and coverage reports).
+
+All of these steps take effect in the ``.emacs-ci/`` folder within project repo. As they do not interfere with system Emacs configuration and are fully self-contained, you can run these both locally as well as on CI services such as GitHub Actions.
 
 How to Use It
 -------------
 
-Individual steps are explained with examples, below, and sample Makefiles and GitHub Actions worflows are provided at the end.
+Individual steps are explained with examples, below. These same steps may be performed locally during development or as part of CI workflows. Sample Makefiles, recipes, and GitHub Actions workflows are provided at the end.
 
 1. Clone Emacs CI
 ~~~~~~~~~~~~~~~~~
 
-In your CI workflow, clone the repo into your repo's root path.
+First, clone this repository into your project's root path.
 
 .. code-block:: bash
 
@@ -25,80 +27,126 @@ In your CI workflow, clone the repo into your repo's root path.
 
 It's advisable to use a dot-prefixed name for the cloned folder so that its contents will be ignored by Emacs when it searches for ELisp modules in your project directory during initialization.
 
-2. (Optional) Declare External Dependencies
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2. Declare Package Recipes
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you have any external project dependencies that aren't listed on package archives, add ``straight-use-package`` declarations for them in a ``<repo-root>/.ci/ci-deps.el`` ELisp module that's checked into your repo. This module, if present, will be loaded before installing your project packages. For example:
+Emacs CI finds and builds packages based on a single, declarative recipe file that you provide. This file is the source of truth for your project's structure and dependencies.
 
-.. code-block:: bash
+* **Location**: Create a file at ``<repo-root>/.ci/recipes.el``.
+* **Format**: The file should contain a single Lisp list of Straight.el-style package recipes.
+* **Content**: The list should at a minimum include recipes for all packages within your repository. It could also include external dependencies that are not on standard package archives like MELPA, or whose standard recipe you want to override for any reason.
+* **Local Packages**: For packages contained within your project's repository, use the special value ``:local-repo "."``.
 
-  ;; Install any third-party packages required by the project
-  ;; that aren't listed on package archives (if they are,
-  ;; Emacs CI will find them there during the usual install step)
-  (straight-use-package
-   '(rigpa :host github :repo "countvajhula/rigpa" :type git))
+For example, a single-package project might have a ``.ci/recipes.el`` like this:
 
-  (provide 'ci-deps)
+.. code-block:: emacs-lisp
+
+   ;; .ci/recipes.el for a single-package repo
+   (
+    (my-package :type git :local-repo "." :files ("*.el"))
+   )
+
+A multi-package suite would define a recipe for each of its components:
+
+.. code-block:: emacs-lisp
+
+   ;; .ci/recipes.el for a multi-package suite
+   (
+    (my-core :type git :local-repo "." :files ("my-core/*.el"))
+    (my-ui :type git :local-repo "." :files ("my-ui/*.el"))
+    ;; A recipe for an external dependency that isn't
+    ;; listed on a package archive such as MELPA
+    (my-dependency :host github :repo "user/my-dependency")
+   )
+
+During the ``bootstrap`` step, this file is used to generate a local recipe repository called "XELPA" (eXtra ELPA), which becomes the primary source for package information during the CI run.
+
+If you do not specify a recipe to use in your ``recipes.el``, Straight will fall back to consulting common recipe repositories such as ELPA, NonGNU ELPA, and MELPA. You can always override the standard recipes using your ``recipes.el``.
 
 3. Declare Environment Variables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You'll need the following environment variables. Set them either in your Makefile that runs these scripts, or in the CI workflow file.
+You'll need the following environment variables, typically set in your project ``Makefile`` or in the CI workflow specification:
 
 .. code-block:: bash
 
-  export CI_PROJECT=<your-project-name>
   export CI_PACKAGES=<package-1> <package-2> ...
-  export CI_REPO_HOST=<github/gitlab/etc>
-  export CI_REPO_PATH=<your-account/your-project>
-  export CI_LISP_DIR=<path-to-sources>
+  export CI_PROJECT=<your-project-name>
 
-``CI_PROJECT`` can be left out if there's just one package (the most common case). If there are multiple packages, they are each expected to be in correspondingly-named folders at the top level of your repo. If you have just one package, the modules are expected to be directly at the top level of the repo, unless you also declare the ``CI_PROJECT`` variable, in which case it will look for the package in a folder of the same name at the top level.
+``CI_PACKAGES``: The list of packages being developed in your repo. This tells the CI checks which packages to target, e.g., for building, linting, and testing. Most commonly, this is just a single package.
 
-If your packages are listed on package archives like ELPA, ``CI_REPO_HOST`` and ``CI_REPO_PATH`` tell Emacs CI the canonical locations of your packages, which allows Straight to validate them.
-
-``CI_LISP_DIR`` by default assumes the root folder of the repo and typically does not need to be set. You might have your source files in a folder like ``lisp``, however, and in that case, you would set this to ``lisp``. This variable is ignored if ``CI_PROJECT`` is set.
+``CI_PROJECT`` (Optional): For multi-package projects, this project name is used as the common symbol prefix to validate against in lint checks. It can be left out if there's just one package in your repo (the most common case).
 
 4. Run the CI Modules You Need
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Emacs CI includes the following modules:
 
-- ``bootstrap``
-- ``install``
-- ``byte-compile``
-- ``native-compile``
-- ``lint``
-- ``checkdoc``
-- ``test``
-- ``coverage``
+- ``bootstrap``: Initializes the CI environment by bootstrapping Straight.el and generating the local XELPA recipe repository. **Must be run first.**
+- ``install``: Installs all project packages and their dependencies.
+- ``byte-compile``: Byte-compiles the project's packages.
+- ``native-compile``: Native-compiles the project's packages (on supported Emacs versions).
+- ``lint``: Runs ``package-lint`` on the source files.
+- ``checkdoc``: Runs ``checkdoc`` on the source files.
+- ``test``: Runs the project's ERT tests.
+- ``coverage``: Runs tests and generates a code coverage report using ``undercover``.
 
-``bootstrap`` (which bootstraps Straight.el) always needs to be run first, before running any of the others that you might need. Each module (including bootstrap) may be run using Emacs's "batch mode." For example:
+Each module is run in a clean, isolated Emacs process. For example:
 
 .. code-block:: bash
 
   cd .emacs-ci && emacs --batch --quick --load lint.el
 
-Sample Makefiles and Workflows
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Sample Makefiles, Recipes, and Workflows
+----------------------------------------
 
 Single-package project
-``````````````````````
+~~~~~~~~~~~~~~~~~~~~~~
 
-For a single-package project hosted on GitHub that uses all the CI steps including generating and submitting a coverage report to Coveralls, see Dynaring:
+For a single-package project hosted on GitHub that uses all the CI steps including generating and submitting a coverage report to `Coveralls <https://coveralls.io/>`_, see Dynaring:
 
 - `Makefile <https://github.com/countvajhula/dynaring/blob/master/Makefile>`__
+
+- `recipes.el <https://github.com/countvajhula/dynaring/blob/master/.ci/recipes.el>`__
 
 - `GitHub Actions Workflow <https://github.com/countvajhula/dynaring/blob/master/.github/workflows/test.yml>`__
 
 Multi-package project
-`````````````````````
+~~~~~~~~~~~~~~~~~~~~~
 
 For a `multi-package project <https://drym-org.github.io/symex.el/Installing-Symex.html>`__, see Symex:
 
 - `Makefile <https://github.com/drym-org/symex.el/blob/main/Makefile>`_
 
+- `recipes.el <https://github.com/drym-org/symex.el/blob/main/.ci/recipes.el>`__
+
 - `GitHub Actions Workflow <https://github.com/drym-org/symex.el/blob/main/.github/workflows/test.yml>`_
+
+Troubleshooting
+---------------
+
+Bootstrap Fails
+~~~~~~~~~~~~~~~
+
+A failure at the bootstrap stage is usually an indication of a problem with ``recipes.el``.
+
+* **Symptom**: ``Error: wrong-type-argument (listp my-package)``
+* **Cause**: ``recipes.el`` is expected to contain a *list* of recipes. Recipes written directly, without a containing list, could cause this error.
+* **Solution**: Wrap the recipe(s) in ``recipes.el`` in a list (see above for examples).
+
+Missing Files
+~~~~~~~~~~~~~
+
+* **Symptom**: ``No such file or directory``
+* **Cause**: A package used in your CI workflow is expecting a file to be present and not finding it. Typically, this is due to a problem in the package recipe and not including the correct files via ``:files``. This commonly occurs with third party dependencies where you may not know the recipe for correctly building the package.
+* **Solution**: If the package is listed on a public recipe repository and you are overriding it, you could look at its recipe there to get an idea. Otherwise, use a reasonable recipe as a starting point and make appropriate changes to ``:files`` in response to the reported errors, until it works.
+
+Coverage Report is Empty or Incomplete
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* **Symptom**: The tests run and pass, but the generated coverage report is empty or shows 0% coverage for some files.
+* **Cause**: ``undercover.el`` needs to instrument your source (``.el``) files. However, the ``build`` step creates compiled (``.elc``) files, and Emacs will prefer to load these faster files during the test run, bypassing the instrumentation.
+* **Solution**: The ``coverage.el`` script handles this automatically by telling its subprocess to prefer loading ``.el`` files over ``.elc`` files. If you are still having issues, ensure your ``UNDERCOVER_CONFIG`` in your ``Makefile`` is pointing to the correct source files (e.g., ``"*.el"`` for a single-package repo).
 
 Non-Ownership
 -------------
