@@ -7,3 +7,4 @@
 *.elc
 dist
 coverage
+*.html
