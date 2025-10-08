@@ -37,6 +37,24 @@ and return a shell-friendly exit code."
     (unwind-protect
         (let* ((args (append '("-Q" "--batch")
                              load-path-args
+                             ;; --- Configure package.el for the linter ---
+                             ;; Although Emacs CI uses Straight.el to find and build
+                             ;; package sources, package-lint uses package.el
+                             ;; internally to check the "installability" of package dependencies.
+                             ;; In order for this to produce an accurate result, we
+                             ;; configure package.el and, in particular, add MELPA
+                             ;; to its list of known archives.
+                             ;; This ensures package-lint can find dependencies on MELPA.
+                             ;; Note that this config is effectively ignored if the client
+                             ;; repo is using countvajhula/package-lint, as that does not
+                             ;; do any installability checks (as those are covered by other,
+                             ;; dedicated, CI facilities).
+                             '("--eval"
+                               "(progn \
+                                  (require 'package) \
+                                  (add-to-list 'package-archives '(\"melpa\" . \"https://melpa.org/packages/\") t) \
+                                  (package-initialize))")
+                             ;; ----------------------------------------------------
                              ;; Set all necessary linter variables.
                              (list "--eval"
                                    (format "(setq package-lint-prefix %S
