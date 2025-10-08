@@ -3,18 +3,19 @@
 ;; It must be run *after* install.el has successfully completed.
 ;; -*- lexical-binding: t -*-
 
+;; Add the current directory (emacs-ci/) to the load-path so we can `require`
+;; modules like ci.el.
+(add-to-list 'load-path ".")
+
 ;; Load the shared CI helper functions and constants.
-(require 'ci (expand-file-name "ci.el"))
+(require 'ci)
 (ci-load-straight)
-(ci-load-optional-deps)
+
 
 ;; --- The Direct Compilation Tool ---
 (defun ci-compile-package (pkg-name)
   "Compile PKG-NAME using `batch-byte-compile`, print all output,
 and return a shell-friendly exit code."
-  ;; First, ensure the package and its dependencies are known to this session.
-  (ci-install-package pkg-name)
-
   (let* ((load-path-args (ci-get-load-path-args pkg-name))
          ;; For compilation, we want all .el files, including autoloads.
          (files-to-compile (ci-get-package-all-files pkg-name))

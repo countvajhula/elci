@@ -3,10 +3,13 @@
 ;; It must be run *after* install.el has successfully completed.
 ;; -*- lexical-binding: t -*-
 
+;; Add the current directory (emacs-ci/) to the load-path.
+(add-to-list 'load-path ".")
+
 ;; Load the shared CI helper functions and constants.
-(require 'ci (expand-file-name "ci.el"))
+(require 'ci)
 (ci-load-straight)
-(ci-load-optional-deps)
+
 
 ;; --- The Checkdoc Tool (Multi-Process Version) ---
 (defun ci-checkdoc-package (pkg-name)

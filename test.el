@@ -1,5 +1,5 @@
 ;; test.el
-;; This script runs the package's ERT tests.
+;; This script runs the project's ERT tests.
 ;; It must be run *after* install.el has successfully completed.
 ;; -*- lexical-binding: t -*-
 
@@ -10,7 +10,6 @@
 ;; Load the shared CI helper functions and constants.
 (require 'ci)
 (ci-load-straight)
-(ci-load-optional-deps)
 
 ;; Install the test runner dependency.
 (straight-use-package 'ert-runner)
@@ -34,19 +33,22 @@ and return a shell-friendly exit code."
                                  all-build-dirs))
          (output-buffer (generate-new-buffer " *test-output*")))
 
-    (message (format "--- Testing %s ---" pkg-name))
+    (message (format "\n--- Running tests for %s ---" pkg-name))
 
     (if (not (file-directory-p test-dir))
-        (progn (message "No tests found.") 0) ; Return success if no tests exist.
+        (progn
+          (message "No 'test/' directory found for this package. Skipping.")
+          0) ; Return success.
 
       (unwind-protect
-          ;; Change the CWD to the project root and let ert-runner
-          ;; auto-discover the `test/` directory.
+          ;; This command changes the CWD to the project root and then tells
+          ;; ert-runner to run tests found in the package's specific test directory.
           (let* ((args (append '("-Q" "--batch")
                                load-path-args
-                               ;; Set the working directory for the subprocess.
                                (list "--eval" (format "(cd %S)" repo-root))
-                               '("-l" "ert-runner")))
+                               '("-l" "ert-runner")
+                               ;; Pass the specific test directory as an argument.
+                               (list test-dir)))
                  (exit-code (apply #'call-process
                                    (executable-find "emacs") nil output-buffer nil args)))
             (with-current-buffer output-buffer
@@ -57,12 +59,17 @@ and return a shell-friendly exit code."
 
 
 ;; --- Main Execution ---
-(let ((exit-code 0))
+(let ((overall-exit-code 0))
   (dolist (pkg ci-packages)
     (let ((status (ci-test-package pkg)))
       (unless (zerop status)
-        (message (format "\n!!! Tests failed for %s with status %d" pkg status))
-        (setq exit-code status))))
-  (if (zerop exit-code)
+        (message (format "\n!!! Tests failed for %s." pkg))
+        ;; Keep track of the first non-zero exit code.
+        (setq overall-exit-code (or overall-exit-code status)))))
+
+  (if (zerop overall-exit-code)
       (message "\nAll tests passed.")
-    (kill-emacs exit-code)))
+    (progn
+      (message "\n!!! Some tests failed.")
+      (kill-emacs overall-exit-code))))
+

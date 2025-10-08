@@ -1,7 +1,6 @@
 ;; install.el
-;; This script is the main entry point for installing all packages.
-;; It loads external dependency definitions and then installs the project's
-;; own packages. It must be run *after* bootstrap.el.
+;; This script installs all packages defined in the project's recipe files.
+;; It must be run *after* bootstrap.el.
 ;; -*- lexical-binding: t -*-
 
 ;; Add the current directory (emacs-ci/) to the load-path so we can `require`
@@ -12,17 +11,15 @@
 (require 'ci)
 (ci-load-straight)
 
-;; Optionally load project-specific external dependencies from the project's
-;; own `ci/` directory, which is one level up from this script's location.
-(ci-load-optional-deps)
-
 (setq straight-allow-recipe-inheritance nil)
-
 
 ;; --- Install project packages ---
 (message "--- Installing project packages ---")
 
+;; The list of packages comes from the CI_PACKAGES env var.
+;; straight.el will find the recipes for these packages in the
+;; generated `xelpa` recipe repository.
 (dolist (pkg ci-packages)
-  (ci-install-package pkg))
+  (straight-use-package (intern pkg)))
 
 (message "--- Package installation complete ---")

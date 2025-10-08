@@ -3,21 +3,20 @@
 ;; It must be run *after* install.el has successfully completed.
 ;; -*- lexical-binding: t -*-
 
-;; Load the shared CI helper functions and constants.
-(require 'ci (expand-file-name "ci.el"))
-(ci-load-straight)
-(ci-load-optional-deps)
+;; Add the current directory (emacs-ci/) to the load-path.
+(add-to-list 'load-path ".")
 
-;; Install the forked linter.
-;; This uses a customized version of package-lint that:
-;;  1. recognizes the package suite pattern
-;;  2. doesn't check availability of dependencies on package archives
-;;     as these packages may not be on such archives (and the
-;;     installation and building of these dependencies is already
-;;     checked in preceding CI checks, i.e., install.el and
-;;     byte-compile.el).
-(straight-use-package
- '(package-lint :host github :repo "countvajhula/package-lint" :branch "control-which-checks-to-run"))
+;; Load the shared CI helper functions and constants.
+(require 'ci)
+(ci-load-straight)
+
+;; Install the linter. straight.el will find the
+;; recipe for this package in the local `xelpa` repository.
+;; If there's no recipe there, it will look on standard configured
+;; archives. If the client repo is using the package suite pattern
+;; (i.e., multiple packages sharing a common project namespace), the
+;; github.com/countvajhula/package-lint fork should be used.
+(straight-use-package 'package-lint)
 
 
 ;; --- The Linter Tool ---
@@ -30,6 +29,8 @@ and return a shell-friendly exit code."
          ;; Use the helper to get a clean list of source files to lint.
          (files-to-lint (ci-get-package-source-files pkg-name))
          (output-buffer (generate-new-buffer " *lint-output*"))
+         ;; The lint prefix is either the project name (for suites) or the
+         ;; single package name.
          (lint-prefix (or ci-project-name (car ci-packages))))
 
     (message (format "--- Linting %s ---" pkg-name))

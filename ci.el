@@ -11,57 +11,42 @@
 
 (defconst ci-project-name (getenv "CI_PROJECT")
   "The project name, read from the CI_PROJECT environment variable.
-If non-nil, this indicates the project is a package suite, where
-each package's source files are in a subdirectory named after the
-package. If nil, it is treated as a single-package repository.")
-
-(defconst ci-lisp-dir (getenv "CI_LISP_DIR")
-  "Where to find the source modules in this project.
-If nil, this assumes the root folder.")
-
-(defconst ci-project-config-path "../.ci"
-  "The path where project-specific CI config is defined by the client.")
-
-;; --- Optional remote repo info ---
-;; If the project is hosted on remote recipe repositories,
-;; then Straight would signal a warning that those recipes,
-;; which contain the host and repo, are incompatible with
-;; the ones used here in CI that use the local repo. Explicitly
-;; indicating the canonical host and repo resolves this ambiguity.
-;; It isn't necessary to specify this for packages that aren't listed
-;; on any remote recipe repository.
-(defconst ci-repo-host (getenv "CI_REPO_HOST")
-  "The Git hosting service, e.g., 'github', 'gitlab'.
-Read from the CI_REPO_HOST environment variable. If non-nil,
-this is used with `ci-repo-path` to resolve ambiguity with
-remote package archives.")
-
-(defconst ci-repo-path (getenv "CI_REPO_PATH")
-  "The path to the repository on the host, e.g., 'user/repo'.
-Read from the CI_REPO_PATH environment variable.")
-
-(when (xor ci-repo-host ci-repo-path)
-  (error "Both CI_REPO_HOST and CI_REPO_PATH must be set, or neither."))
-;; ---
+If non-nil, this indicates the project is a package suite. If nil,
+it is treated as a single-package repository.")
 
 ;; If a project name is not specified, it cannot be a multi-package repository.
 (when (and (null ci-project-name) (> (length ci-packages) 1))
   (error "CI_PROJECT env var must be set for multi-package repositories"))
 
-
 (defun ci-load-straight ()
-  "Load the straight.el library from the local CI installation.
-This must be called at the beginning of any script that
-needs to use straight.el's functions."
+  "Load straight.el and register the local 'xelpa' recipe repository."
+  ;; All CI scripts must see this value when they are loaded.
+  (defvar straight-base-dir (expand-file-name "init"))
+
   (let ((bootstrap-file
          (expand-file-name
           "straight/repos/straight.el/bootstrap.el"
-          (expand-file-name "init"))))
+          straight-base-dir)))
     (unless (file-exists-p bootstrap-file)
       (error "straight.el not found. Run bootstrap.el first."))
-    (load bootstrap-file nil 'nomessage)
-    ;; ensure all CI scripts use the local init path
-    (setq straight-base-dir (expand-file-name "init"))))
+    (load bootstrap-file nil 'nomessage))
+
+  ;; Disable recipe inheritance to prevent unnecessary network access.
+  (setq straight-allow-recipe-inheritance nil)
+
+  ;; --- Register the 'xelpa' recipe repository ---
+  ;; Ensure that straight.el knows about our local recipes and gives
+  ;; them the highest priority.
+  (let ((xelpa-dir (expand-file-name "xelpa")))
+    (when (file-directory-p xelpa-dir)
+      (message "--- Registering 'xelpa' recipe repository ---")
+      ;; 1. Make the package known to straight.el.
+      (straight-use-package `(xelpa :type git :local-repo ,xelpa-dir :build nil))
+      ;; 2. Load the recipe protocol implementation.
+      (add-to-list 'load-path xelpa-dir)
+      (require 'xelpa)
+      ;; 3. Add xelpa to the head of the list of repositories to search.
+      (add-to-list 'straight-recipe-repositories 'xelpa))))
 
 (defun ci-get-load-path-args (pkg-name &optional extra-dirs)
   "Return a list of \"-L /path\" arguments for PKG-NAME.
@@ -78,69 +63,14 @@ Optional EXTRA-DIRS can be provided to add more directories to the path."
   (expand-file-name (concat pkg-name ".el") (straight--build-dir pkg-name)))
 
 (defun ci-get-package-all-files (pkg-name)
-  "Return absolute paths to all .el files for PKG-NAME, including subdirs."
+  "Return absolute paths to all .el files for PKG-NAME."
   (directory-files-recursively (straight--build-dir pkg-name) "\\.el$"))
 
 (defun ci-get-package-source-files (pkg-name)
-  "Return absolute paths to the source .el files for PKG-NAME.
-This uses the straight.el build directory and excludes generated files."
+  "Return absolute paths to the source .el files for PKG-NAME,
+excluding generated autoloads."
   (let* ((all-files (ci-get-package-all-files pkg-name)))
-    ;; Exclude generated autoload files from checks.
     (cl-remove-if (lambda (file) (string-match-p "-autoloads\\.el$" file))
                   all-files)))
-
-(defun ci-load-optional-deps ()
-  "Load the project-specific `ci-deps.el` file, if it exists.
-This function locates the file in the project's `ci/` directory
-and adds that directory to the `load-path` before requiring the
-`ci-deps` feature. This makes external dependency recipes
-available to the current Emacs session."
-  (let ((project-ci-dir (expand-file-name ci-project-config-path)))
-    (when (file-exists-p (expand-file-name "ci-deps.el" project-ci-dir))
-      (add-to-list 'load-path project-ci-dir)
-      (require 'ci-deps))))
-
-(defun ci-install-package (pkg-name)
-  "Ensure PKG-NAME is known to the current straight.el session.
-If it's already installed, this re-declares the package's recipe,
-which is idempotent but forces straight.el to re-analyze its
-dependencies for this session."
-  (let* ((repo-root (expand-file-name ".."))
-         (is-suite ci-project-name)
-         (relative-dir (if is-suite
-                           pkg-name
-                         (or ci-lisp-dir ".")))
-         ;; For a package suite, each package is in a subdir named after it.
-         ;; For single-package repos, files are in the "lisp dir,"
-         ;; typically the root.
-         (source-dir (expand-file-name relative-dir repo-root))
-         ;; Manually expand the glob into a list of files. The paths
-         ;; must be relative to the repo root for the :files keyword.
-         (files (mapcar (lambda (file) (file-relative-name file repo-root))
-                        (directory-files source-dir t "\\.el$")))
-         ;; Base recipe for a local package.
-         (recipe `(,(intern pkg-name)
-                   :local-repo ,repo-root
-                   :files ,files)))
-
-    ;; If the project's canonical remote repository is specified via
-    ;; env vars, add that information to the recipe. This resolves
-    ;; ambiguity with recipes from remote archives like MELPA.
-    ;;
-    ;; NOTE: It may be preferable if we could simply indicate to
-    ;; Straight that one recipe has priority over another, without
-    ;; requiring that they be consistent, or to suspend this
-    ;; validation in some way, so that setting these environment
-    ;; variables purely for the sake of suppressing this warning is
-    ;; not necessary. For example, these variables would need to be
-    ;; updated if the repo is ever moved, even though where it's
-    ;; hosted is irrelevant to the needs of CI (except if we are
-    ;; explicitly checking remote recipes and installability rather
-    ;; than self-consistency).
-    (when (and ci-repo-host ci-repo-path)
-      (setq recipe (append recipe `(:host ,(intern ci-repo-host)
-                                    :repo ,ci-repo-path))))
-
-    (straight-use-package recipe)))
 
 (provide 'ci)
