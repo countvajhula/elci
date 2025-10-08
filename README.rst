@@ -5,7 +5,7 @@ Self-contained Continuous Integration (CI) for Emacs projects.
 
 .. contents:: :depth: 2
 
-This can be used in any ELisp project on any CI host. Your project itself need not be on a package archive like ELPA, and its external dependencies need not be on package archives either, as long as you specify where they can be found using a package recipe.
+Emacs CI can be used in any ELisp project on any CI host. Your project itself need not be on a package archive like ELPA, and its external dependencies need not be on package archives either, as long as you specify where they can be found using a package recipe.
 
 Emacs CI uses Straight.el to install packages and their dependencies using any recipes you specify. The specific CI steps also use ``package-lint`` and ``checkdoc`` (for linting), and ``ert-runner`` and ``undercover`` (for tests and coverage reports).
 
