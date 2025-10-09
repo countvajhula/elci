@@ -10,12 +10,8 @@
 (require 'ci)
 (ci-load-straight)
 
-;; Install the linter. straight.el will find the
-;; recipe for this package in the local `xelpa` repository.
-;; If there's no recipe there, it will look on standard configured
-;; archives. If the client repo is using the package suite pattern
-;; (i.e., multiple packages sharing a common project namespace), the
-;; github.com/countvajhula/package-lint fork should be used.
+;; Install package-lint. straight.el will find the recipe for this in the
+;; project's local `xelpa` repository if it exists, or on MELPA otherwise.
 (straight-use-package 'package-lint)
 
 
@@ -26,41 +22,41 @@ and return a shell-friendly exit code."
   (let* ((linter-dir (straight--build-dir "package-lint"))
          (load-path-args (ci-get-load-path-args pkg-name (list linter-dir)))
          (main-file (ci-get-package-main-file pkg-name))
-         ;; Use the helper to get a clean list of source files to lint.
          (files-to-lint (ci-get-package-source-files pkg-name))
          (output-buffer (generate-new-buffer " *lint-output*"))
-         ;; The lint prefix is either the project name (for suites) or the
-         ;; single package name.
-         (lint-prefix (or ci-project-name (car ci-packages))))
+         (lint-prefix (or ci-project-name (car ci-packages)))
+         (xelpa-path (expand-file-name "xelpa")))
 
     (message (format "--- Linting %s ---" pkg-name))
     (unwind-protect
-        (let* ((args (append '("-Q" "--batch")
+        (let* ((debug-and-setup-program
+                `(progn
+                   (message "--- Linter Subprocess Debug ---")
+                   (message "  - Initial package-archives: %S" package-archives)
+
+                   (require 'package)
+                   (add-to-list 'package-archives '("xelpa" . ,xelpa-path) t)
+                   (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+                   (message "  - Updated package-archives: %S" package-archives)
+
+                   (message "  - Running (package-initialize)...")
+                   (condition-case err
+                       (package-initialize)
+                     (error (message "  - ERROR during package-initialize: %S" err)))
+                   (message "  - (package-initialize) complete.")
+                   (message "  - package-archive-contents is %s"
+                            (if package-archive-contents "populated" "NIL"))
+
+                   (setq package-lint-prefix ,lint-prefix)
+                   (setq package-lint-main-file ,main-file)
+
+                   (message "  - Linting with prefix: %S" package-lint-prefix)
+                   (message "  - Linting with main file: %S" package-lint-main-file)
+                   (message "---------------------------------")))
+               (args (append '("-Q" "--batch")
                              load-path-args
-                             ;; --- Configure package.el for the linter ---
-                             ;; Although Emacs CI uses Straight.el to find and build
-                             ;; package sources, package-lint uses package.el
-                             ;; internally to check the "installability" of package dependencies.
-                             ;; In order for this to produce an accurate result, we
-                             ;; configure package.el and, in particular, add MELPA
-                             ;; to its list of known archives.
-                             ;; This ensures package-lint can find dependencies on MELPA.
-                             ;; Note that this config is effectively ignored if the client
-                             ;; repo is using countvajhula/package-lint, as that does not
-                             ;; do any installability checks (as those are covered by other,
-                             ;; dedicated, CI facilities).
-                             '("--eval"
-                               "(progn \
-                                  (require 'package) \
-                                  (add-to-list 'package-archives '(\"melpa\" . \"https://melpa.org/packages/\") t) \
-                                  (package-initialize))")
-                             ;; ----------------------------------------------------
-                             ;; Set all necessary linter variables.
-                             (list "--eval"
-                                   (format "(setq package-lint-prefix %S
-                                                  package-lint-main-file %S
-                                                  package-lint-check-installable nil)"
-                                           lint-prefix main-file))
+                             ;; Run the debug and setup program.
+                             (list "--eval" (format "%S" debug-and-setup-program))
                              '("-l" "package-lint")
                              '("-f" "package-lint-batch-and-exit")
                              files-to-lint))
@@ -83,3 +79,4 @@ and return a shell-friendly exit code."
   (if (zerop exit-code)
       (message "\nAll packages passed linting.")
     (kill-emacs exit-code)))
+
