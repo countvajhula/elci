@@ -53,7 +53,8 @@ and return a shell-friendly exit code."
                                "(progn \
                                   (require 'package) \
                                   (add-to-list 'package-archives '(\"melpa\" . \"https://melpa.org/packages/\") t) \
-                                  (package-initialize))")
+                                  (package-initialize)
+                                  (package-refresh-contents))")
                              ;; ----------------------------------------------------
                              ;; Set all necessary linter variables.
                              (list "--eval"
