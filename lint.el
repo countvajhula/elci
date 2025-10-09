@@ -34,25 +34,23 @@ and return a shell-friendly exit code."
                    (require 'package) ; Load the package library first.
 
                    (message "--- Linter Subprocess Debug ---")
-                   (message "  - Initial package-archives: %S" package-archives)
-
                    (add-to-list 'package-archives '("xelpa" . ,xelpa-path) t)
                    (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-                   (message "  - Updated package-archives: %S" package-archives)
+                   (message "  - package-archives set to: %S" package-archives)
 
-                   (message "  - Running (package-initialize)...")
+                   (message "  - Running (package-initialize) and (package-refresh-contents)...")
                    (condition-case err
-                       (package-initialize)
-                     (error (message "  - ERROR during package-initialize: %S" err)))
-                   (message "  - (package-initialize) complete.")
+                       (progn
+                         (package-initialize)
+                         ;; This is the crucial step: actually fetch the package lists.
+                         (package-refresh-contents))
+                     (error (message "  - ERROR during package setup: %S" err)))
+                   (message "  - Package setup complete.")
                    (message "  - package-archive-contents is %s"
                             (if package-archive-contents "populated" "NIL"))
 
                    (setq package-lint-prefix ,lint-prefix)
                    (setq package-lint-main-file ,main-file)
-
-                   (message "  - Linting with prefix: %S" package-lint-prefix)
-                   (message "  - Linting with main file: %S" package-lint-main-file)
                    (message "---------------------------------")))
                (args (append '("-Q" "--batch")
                              load-path-args
