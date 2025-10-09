@@ -31,10 +31,11 @@ and return a shell-friendly exit code."
     (unwind-protect
         (let* ((debug-and-setup-program
                 `(progn
+                   (require 'package) ; Load the package library first.
+
                    (message "--- Linter Subprocess Debug ---")
                    (message "  - Initial package-archives: %S" package-archives)
 
-                   (require 'package)
                    (add-to-list 'package-archives '("xelpa" . ,xelpa-path) t)
                    (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
                    (message "  - Updated package-archives: %S" package-archives)
