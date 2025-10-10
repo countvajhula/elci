@@ -3,7 +3,7 @@
 ;; It must be run *after* install.el has successfully completed.
 ;; -*- lexical-binding: t -*-
 
-;; Add the current directory (emacs-ci/) to the load-path.
+;; Add the current directory to the load-path.
 (add-to-list 'load-path ".")
 
 ;; Load the shared CI helper functions and constants.
@@ -38,7 +38,7 @@ and return a shell-friendly exit code."
         (let* ((args (append '("-Q" "--batch")
                              load-path-args
                              ;; --- Configure package.el for the linter ---
-                             ;; Although Emacs CI uses Straight.el to find and build
+                             ;; Although Elci uses Straight.el to find and build
                              ;; package sources, package-lint uses package.el
                              ;; internally to check the "installability" of package dependencies.
                              ;; In order for this to produce an accurate result, we

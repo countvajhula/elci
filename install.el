@@ -4,7 +4,7 @@
 ;; It must be run *after* bootstrap.el has successfully completed.
 ;; -*- lexical-binding: t -*-
 
-;; Add the current directory (emacs-ci/) to the load-path.
+;; Add the current directory to the load-path.
 (add-to-list 'load-path ".")
 
 ;; Load the shared CI helper functions and constants.

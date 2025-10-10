@@ -1,36 +1,36 @@
-emacs-ci
-========
+elci
+====
 
-Self-contained Continuous Integration (CI) for Emacs projects.
+Self-contained Continuous Integration (CI) for Emacs Lisp projects.
 
 .. contents:: :depth: 2
 
-Emacs CI can be used in any ELisp project on any CI host. Your project itself need not be on a package archive like ELPA, and its external dependencies need not be on package archives either, as long as you specify where they can be found using a package recipe.
+Elci can be used in any ELisp project on any CI host. Your project itself need not be on a package archive like ELPA, and its external dependencies need not be on package archives either, as long as you specify where they can be found using a package recipe.
 
-Emacs CI uses Straight.el to install packages and their dependencies using any recipes you specify. The specific CI steps also use ``package-lint`` and ``checkdoc`` (for linting), and ``ert-runner`` and ``undercover`` (for tests and coverage reports).
+Elci uses Straight.el to install packages and their dependencies using any recipes you specify. The specific CI steps also use ``package-lint`` and ``checkdoc`` (for linting), and ``ert-runner`` and ``undercover`` (for tests and coverage reports).
 
-All of these steps take effect in the ``.emacs-ci/`` folder within project repo. As they do not interfere with system Emacs configuration and are fully self-contained, you can run these both locally as well as on CI services such as GitHub Actions.
+All of these steps take effect in the ``.elci/`` folder within project repo. As they do not interfere with system Emacs configuration and are fully self-contained, you can run these both locally as well as on CI services such as GitHub Actions.
 
 How to Use It
 -------------
 
 Individual steps are explained with examples, below. These same steps may be performed locally during development or as part of CI workflows. Sample Makefiles, recipes, and GitHub Actions workflows are provided at the end.
 
-1. Clone Emacs CI
-~~~~~~~~~~~~~~~~~
+1. Clone Elci
+~~~~~~~~~~~~~
 
 First, clone this repository into your project's root path.
 
 .. code-block:: bash
 
-  git clone https://github.com/countvajhula/emacs-ci.git .emacs-ci
+  git clone https://github.com/countvajhula/elci.git .elci
 
 It's advisable to use a dot-prefixed name for the cloned folder so that its contents will be ignored by Emacs when it searches for ELisp modules in your project directory during initialization.
 
 2. Declare Package Recipes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Emacs CI finds and builds packages based on a single, declarative recipe file that you provide. This file is the source of truth for your project's structure and dependencies.
+Elci finds and builds packages based on a single, declarative recipe file that you provide. This file is the source of truth for your project's structure and dependencies.
 
 * **Location**: Create a file at ``<repo-root>/.ci/recipes.el``.
 * **Format**: The file should contain a single Lisp list of Straight.el-style package recipes.
@@ -80,7 +80,7 @@ You'll need the following environment variables, typically set in your project `
 4. Run the CI Modules You Need
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Emacs CI includes the following modules:
+Elci includes the following modules:
 
 - ``bootstrap``: Initializes the CI environment by bootstrapping Straight.el and generating the local XELPA recipe repository. **Must be run first.**
 - ``install``: Installs all project packages and their dependencies.
@@ -95,7 +95,7 @@ Each module is run in a clean, isolated Emacs process. For example:
 
 .. code-block:: bash
 
-  cd .emacs-ci && emacs --batch --quick --load lint.el
+  cd .elci && emacs --batch --quick --load lint.el
 
 Sample Makefiles, Recipes, and Workflows
 ----------------------------------------
