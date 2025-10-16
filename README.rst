@@ -5,9 +5,11 @@ Self-contained Continuous Integration (CI) for Emacs Lisp projects.
 
 .. contents:: :depth: 2
 
-Elci can be used in any ELisp project on any CI host. Your project itself need not be on a package archive like ELPA, and its external dependencies need not be on package archives either, as long as you specify where they can be found using a package recipe.
+Elci can be used in any ELisp project to run code quality checks locally during development as well in automated CI workflows on any CI host.
 
-Elci uses Straight.el to install packages and their dependencies using any recipes you specify. The specific CI steps also use ``package-lint`` and ``checkdoc`` (for linting), and ``ert-runner`` and ``undercover`` (for tests and coverage reports).
+Elci uses Straight.el to install packages and their dependencies using any recipes you specify. Your project itself need not be on a package archive like ELPA, and its external dependencies need not be on package archives either, as long as you specify where they can be found in their package recipes.
+
+The specific CI steps also use ``package-lint`` and ``checkdoc`` (for linting), and ``ert-runner`` and ``undercover`` (for tests and coverage reports).
 
 All of these steps take effect in the ``.elci/`` folder within project repo. As they do not interfere with system Emacs configuration and are fully self-contained, you can run these both locally as well as on CI services such as GitHub Actions.
 
