@@ -11,7 +11,7 @@ used by Straight doesn't yet exist."
   (unless (file-exists-p recipes-file)
     (user-error "Recipes file %s not found!" recipes-file))
   (let* ((recipes (with-temp-buffer
-                    (insert-file-contents-literally elacarte-recipes-file)
+                    (insert-file-contents-literally recipes-file)
                     ;; Use `read-from-string` to handle empty files gracefully.
                     (car (read-from-string (buffer-string)))))
          (recipe (alist-get 'elacarte recipes)))
