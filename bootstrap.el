@@ -7,8 +7,6 @@
 
 (require 'base)
 
-(defvar straight-base-dir (expand-file-name "init"))
-
 (message "--- Bootstrapping straight.el ---")
 
 ;; --- Bootstrap straight.el ---
