@@ -5,7 +5,7 @@
 (defun bootstrap-elacarte (recipes-file)
   "Directly read the recipe for elacarte and install it.
 
-RECIPES is a file containing a list of recipes. Reading the recipes.el
+RECIPES is a file containing a list of recipes. Reading the recipes.eld
 files directly is necessary because a recipe repository that could be
 used by Straight doesn't yet exist."
   (unless (file-exists-p recipes-file)

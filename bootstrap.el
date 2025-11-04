@@ -1,6 +1,6 @@
 ;; bootstrap.el
 ;; This script bootstraps straight.el and generates the local `xelpa`
-;; recipe repository from the project's `.ci/recipes.el` file.
+;; recipe repository from the project's `.ci/recipes.eld` file.
 ;; -*- lexical-binding: t -*-
 
 (require 'base (expand-file-name "base.el"))
@@ -33,16 +33,16 @@
 
 ;; --- Install Elacarte and build local recipe repository ---
 (let* ((repo-root (expand-file-name ".."))
-       (elci-recipes (expand-file-name "ci-recipes.el"))
-       (project-recipes (expand-file-name "recipes.el" repo-root))
-       (project-ci-recipes (expand-file-name ".ci/recipes.el" repo-root)))
+       (elci-recipes (expand-file-name "ci-recipes.eld"))
+       (project-recipes (expand-file-name "recipes.eld" repo-root))
+       (project-ci-recipes (expand-file-name ".ci/recipes.eld" repo-root)))
   (message "--- Installing Elacarte and building local recipe repository ---")
   ;; 1. install elacarte and set the elacarte-base-dir
-  ;; Although the recipe is present in elci's recipes.el, Elacarte itself
+  ;; Although the recipe is present in elci's recipes.eld, Elacarte itself
   ;; is needed before we could build and use the local recipe repository
   ;; that would house this recipe and allow Straight to install it!
   ;; In order to minimally "bootstrap" it, we simply read this recipe
-  ;; directly from recipes.el, and install it using that recipe inline
+  ;; directly from recipes.eld, and install it using that recipe inline
   ;; in this call for Straight to install it.
   ;; Future use of Elacarte needn't do this as long as the built local
   ;; recipe repository is known to Straight.

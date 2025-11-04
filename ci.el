@@ -39,7 +39,7 @@ it is treated as a single-package repository.")
   ;; Install Elacarte.
   ;; This ensures that straight.el knows about our local recipes and gives
   ;; them the highest priority.
-  (let ((elci-recipes (expand-file-name "ci-recipes.el")))
+  (let ((elci-recipes (expand-file-name "ci-recipes.eld")))
     (bootstrap-elacarte elci-recipes)
     (require 'elacarte)
     ;; we don't need to build the recipe repository as it has

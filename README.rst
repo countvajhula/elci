@@ -34,16 +34,16 @@ It's advisable to use a dot-prefixed name for the cloned folder so that its cont
 
 Elci finds and builds packages based on a single, declarative recipe file that you provide. This file is the source of truth for your project's structure and dependencies.
 
-* **Location**: Create a file at ``<repo-root>/.ci/recipes.el``.
+* **Location**: Create a file at ``<repo-root>/.ci/recipes.eld``.
 * **Format**: The file should contain a single Lisp list of Straight.el-style package recipes.
 * **Content**: The list should at a minimum include recipes for all packages within your repository. It could also include external dependencies that are not on standard package archives like MELPA, or whose standard recipe you want to override for any reason.
 * **Local Packages**: For packages contained within your project's repository, use the special value ``:local-repo "."``.
 
-For example, a single-package project might have a ``.ci/recipes.el`` like this:
+For example, a single-package project might have a ``.ci/recipes.eld`` like this:
 
 .. code-block:: emacs-lisp
 
-   ;; .ci/recipes.el for a single-package repo
+   ;; .ci/recipes.eld for a single-package repo
    (
     (my-package :type git :local-repo "." :files ("*.el"))
    )
@@ -52,7 +52,7 @@ A multi-package suite would define a recipe for each of its components:
 
 .. code-block:: emacs-lisp
 
-   ;; .ci/recipes.el for a multi-package suite
+   ;; .ci/recipes.eld for a multi-package suite
    (
     (my-core :type git :local-repo "." :files ("my-core/*.el"))
     (my-ui :type git :local-repo "." :files ("my-ui/*.el"))
@@ -63,7 +63,7 @@ A multi-package suite would define a recipe for each of its components:
 
 During the ``bootstrap`` step, this file is used to generate a local recipe repository called "XELPA" (eXtra ELPA), which becomes the primary source for package information during the CI run.
 
-If you do not specify a recipe to use in your ``recipes.el``, Straight will fall back to consulting common recipe repositories such as ELPA, NonGNU ELPA, and MELPA. You can always override the standard recipes using your ``recipes.el``.
+If you do not specify a recipe to use in your ``recipes.eld``, Straight will fall back to consulting common recipe repositories such as ELPA, NonGNU ELPA, and MELPA. You can always override the standard recipes using your ``recipes.eld``.
 
 3. Declare Environment Variables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -109,7 +109,7 @@ For a single-package project hosted on GitHub that uses all the CI steps includi
 
 - `Makefile <https://github.com/countvajhula/dynaring/blob/master/Makefile>`__
 
-- `recipes.el <https://github.com/countvajhula/dynaring/blob/master/.ci/recipes.el>`__
+- `recipes.eld <https://github.com/countvajhula/dynaring/blob/master/.ci/recipes.eld>`__
 
 - `GitHub Actions Workflow <https://github.com/countvajhula/dynaring/blob/master/.github/workflows/test.yml>`__
 
@@ -120,7 +120,7 @@ For a `multi-package project <https://drym-org.github.io/symex.el/Installing-Sym
 
 - `Makefile <https://github.com/drym-org/symex.el/blob/main/Makefile>`_
 
-- `recipes.el <https://github.com/drym-org/symex.el/blob/main/.ci/recipes.el>`__
+- `recipes.eld <https://github.com/drym-org/symex.el/blob/main/.ci/recipes.eld>`__
 
 - `GitHub Actions Workflow <https://github.com/drym-org/symex.el/blob/main/.github/workflows/test.yml>`_
 
@@ -130,11 +130,11 @@ Troubleshooting
 Bootstrap Fails
 ~~~~~~~~~~~~~~~
 
-A failure at the bootstrap stage is usually an indication of a problem with ``recipes.el``.
+A failure at the bootstrap stage is usually an indication of a problem with ``recipes.eld``.
 
 * **Symptom**: ``Error: wrong-type-argument (listp my-package)``
-* **Cause**: ``recipes.el`` is expected to contain a *list* of recipes. Recipes written directly, without a containing list, could cause this error.
-* **Solution**: Wrap the recipe(s) in ``recipes.el`` in a list (see above for examples).
+* **Cause**: ``recipes.eld`` is expected to contain a *list* of recipes. Recipes written directly, without a containing list, could cause this error.
+* **Solution**: Wrap the recipe(s) in ``recipes.eld`` in a list (see above for examples).
 
 Missing Files
 ~~~~~~~~~~~~~
