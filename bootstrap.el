@@ -7,6 +7,8 @@
 
 (require 'base)
 
+(defvar my-straight-base-dir (expand-file-name "init"))
+
 (message "--- Bootstrapping straight.el ---")
 
 ;; --- Bootstrap straight.el ---
@@ -14,7 +16,7 @@
 (let ((bootstrap-file
        (expand-file-name
         "straight/repos/straight.el/bootstrap.el"
-        straight-base-dir))
+        my-straight-base-dir))
       (bootstrap-version 7))
   (unless (file-exists-p bootstrap-file)
     (with-current-buffer
