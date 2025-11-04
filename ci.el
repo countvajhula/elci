@@ -2,6 +2,8 @@
 ;; This script provides shared functions and constants for the CI process.
 ;; -*- lexical-binding: t -*-
 
+(require 'base)
+
 (defconst ci-packages
   (let ((packages-env (getenv "CI_PACKAGES")))
     (unless (and packages-env (not (string-equal packages-env "")))
@@ -34,19 +36,15 @@ it is treated as a single-package repository.")
   ;; Disable recipe inheritance to prevent unnecessary network access.
   (setq straight-allow-recipe-inheritance nil)
 
-  ;; --- Register the 'xelpa' recipe repository ---
-  ;; Ensure that straight.el knows about our local recipes and gives
+  ;; Install Elacarte.
+  ;; This ensures that straight.el knows about our local recipes and gives
   ;; them the highest priority.
-  (let ((xelpa-dir (expand-file-name "xelpa")))
-    (when (file-directory-p xelpa-dir)
-      (message "--- Registering 'xelpa' recipe repository ---")
-      ;; 1. Make the package known to straight.el.
-      (straight-use-package `(xelpa :type git :local-repo ,xelpa-dir :build nil))
-      ;; 2. Load the recipe protocol implementation.
-      (add-to-list 'load-path xelpa-dir)
-      (require 'xelpa)
-      ;; 3. Add xelpa to the head of the list of repositories to search.
-      (add-to-list 'straight-recipe-repositories 'xelpa))))
+  (let ((elci-recipes (expand-file-name "ci-recipes.el")))
+    (bootstrap-elacarte elci-recipes)
+    (require 'elacarte)
+    ;; we don't need to build the recipe repository as it has
+    ;; already been built. We just need to let straight know about it.
+    (elacarte-register-recipe-repository)))
 
 (defun ci-get-load-path-args (pkg-name &optional extra-dirs)
   "Return a list of \"-L /path\" arguments for PKG-NAME.

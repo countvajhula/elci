@@ -3,6 +3,10 @@
 ;; recipe repository from the project's `.ci/recipes.el` file.
 ;; -*- lexical-binding: t -*-
 
+(add-to-list 'load-path ".")
+
+(require 'base)
+
 (defvar straight-base-dir (expand-file-name "init"))
 
 (message "--- Bootstrapping straight.el ---")
@@ -23,42 +27,37 @@
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 
+(setq straight-base-dir (expand-file-name "init"))
+
+(setq straight-allow-recipe-inheritance nil)
+
 (message "--- Bootstrap complete ---")
 
-
-;; --- Generate local 'xelpa' recipe repository ---
+;; --- Install Elacarte and build local recipe repository ---
 (let* ((repo-root (expand-file-name ".."))
-       (project-recipe-file (expand-file-name ".ci/recipes.el" repo-root))
-       (xelpa-dir (expand-file-name "xelpa"))
-       (xelpa-recipes-dir (expand-file-name "recipes" xelpa-dir)))
-  (when (file-exists-p project-recipe-file)
-    (message "--- Generating local 'xelpa' recipe repository ---")
-    ;; Clean and create the target directory.
-    (when (file-directory-p xelpa-recipes-dir)
-      (delete-directory xelpa-recipes-dir t))
-    (make-directory xelpa-recipes-dir t)
-
-    ;; Read the list of recipes from the project's file.
-    ;; The recipes could either be verbatim lists that would
-    ;; be used inline as a straight-use-package recipe, e.g.,
-    ;; (my-package :type git :host github :files ("*.el") ...)
-    ;; or they could be alist-formatted, like so:
-    ;; (my-package . (:type git :host github :files ("*.el") ...))
-    (let ((recipes (with-temp-buffer
-                     (insert-file-contents project-recipe-file)
-                     (read (current-buffer)))))
-      (dolist (recipe recipes)
-        (let* ((recipe-id (car recipe))
-               ;; Handle recipe ID being either a symbol or a string.
-               (package-name (if (symbolp recipe-id) (symbol-name recipe-id) recipe-id))
-               (plist (cdr recipe))
-               (target-file (expand-file-name package-name xelpa-recipes-dir)))
-          ;; If the recipe uses `:local-repo "."`, resolve it to an
-          ;; absolute path to make it unambiguous for straight.el.
-          (when (equal (plist-get plist :local-repo) ".")
-            (setq plist (plist-put plist :local-repo repo-root)))
-
-          ;; Write the final, processed recipe to its own file in xelpa.
-          (with-temp-file target-file
-            (prin1 (cons (intern package-name) plist) (current-buffer)))))))
-    (message "--- 'xelpa' generation complete ---"))
+       (elci-recipes (expand-file-name "ci-recipes.el"))
+       (project-recipes (expand-file-name "recipes.el" repo-root))
+       (project-ci-recipes (expand-file-name ".ci/recipes.el" repo-root)))
+  (message "--- Installing Elacarte and building local recipe repository ---")
+  ;; 1. install elacarte and set the elacarte-base-dir
+  ;; Although the recipe is present in elci's recipes.el, Elacarte itself
+  ;; is needed before we could build and use the local recipe repository
+  ;; that would house this recipe and allow Straight to install it!
+  ;; In order to minimally "bootstrap" it, we simply read this recipe
+  ;; directly from recipes.el, and install it using that recipe inline
+  ;; in this call for Straight to install it.
+  ;; Future use of Elacarte needn't do this as long as the built local
+  ;; recipe repository is known to Straight.
+  (bootstrap-elacarte elci-recipes)
+  (require 'elacarte)
+  ;; 2. add recipes in the order: elci, project, project's .ci. [don't support "."]
+  (when (file-exists-p elci-recipes)
+    (elacarte-add-recipes-by-file-url elci-recipes 'replace 'noconfirm))
+  (when (file-exists-p project-recipes)
+    (elacarte-add-recipes-by-file-url project-recipes 'replace 'noconfirm))
+  (when (file-exists-p project-ci-recipes)
+    (elacarte-add-recipes-by-file-url project-ci-recipes 'replace 'noconfirm))
+  ;; 3. set up local elacarte recipe repo called 'xelpa'
+  (elacarte-build-recipe-repository)
+  (elacarte-register-recipe-repository)
+  (message "--- Elacarte done ---"))
