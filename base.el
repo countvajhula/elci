@@ -8,12 +8,16 @@
 RECIPES is a file containing a list of recipes. Reading the recipes.el
 files directly is necessary because a recipe repository that could be
 used by Straight doesn't yet exist."
-  (let* ((recipes (when (file-exists-p recipes-file)
-                    (with-temp-buffer
-                      (insert-file-contents-literally recipes-file)
-                      (read (current-buffer)))))
-         (elacarte-recipe (cons 'elacarte (alist-get 'elacarte recipes))))
-    (straight-use-package elacarte-recipe))
+  (unless (file-exists-p recipes-file)
+    (user-error "Recipes file %s not found!" recipes-file))
+  (let* ((recipes (with-temp-buffer
+                    (insert-file-contents-literally elacarte-recipes-file)
+                    ;; Use `read-from-string` to handle empty files gracefully.
+                    (car (read-from-string (buffer-string)))))
+         (recipe (alist-get 'elacarte recipes)))
+    (unless recipe
+      (user-error "Elacarte recipe missing in %s!" recipes-file))
+    (straight-use-package (cons 'elacarte recipe)))
   (setq elacarte-base-dir (expand-file-name "elacarte" "init")))
 
 (provide 'base)
