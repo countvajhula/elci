@@ -3,9 +3,7 @@
 ;; recipe repository from the project's `.ci/recipes.el` file.
 ;; -*- lexical-binding: t -*-
 
-(add-to-list 'load-path ".")
-
-(require 'base)
+(require 'base (expand-file-name "base.el"))
 
 (defvar straight-base-dir (expand-file-name "init"))
 
