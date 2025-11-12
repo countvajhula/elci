@@ -50,15 +50,15 @@
   (require 'elacarte)
   ;; 2. add recipes in the order: elci, project, project's .ci. [don't support "."]
   (if (file-exists-p elci-recipes)
-      (elacarte-add-recipes-by-file-url elci-recipes 'replace 'noconfirm)
+      (elacarte-add-recipes-in-file elci-recipes)
     (warn "No recipes file found in Elci for CI."))
   (if (file-exists-p project-recipes)
-      (elacarte-add-recipes-by-file-url project-recipes 'replace 'noconfirm)
+      (elacarte-add-recipes-in-file project-recipes)
     (warn "No recipes file found in the project."))
   (if (file-exists-p project-ci-recipes)
-      (elacarte-add-recipes-by-file-url project-ci-recipes 'replace 'noconfirm)
+      (elacarte-add-recipes-in-file project-ci-recipes)
     (warn "No recipes file found in the project's CI overrides."))
-  ;; 3. set up local elacarte recipe repo called 'xelpa'
+  ;; 3. set up local elacarte recipe repo
   (elacarte-build-recipe-repository)
   (elacarte-register-recipe-repository)
   (message "--- Elacarte done ---"))
