@@ -8,7 +8,6 @@
 
 ;; Load the shared CI helper functions and constants.
 (require 'ci)
-(ci-load-straight)
 
 ;; Install the linter. straight.el will find the
 ;; recipe for this package in the local Elacarte repository.

@@ -9,7 +9,6 @@
 
 ;; Load the shared CI helper functions and constants.
 (require 'ci)
-(ci-load-straight)
 
 ;; Install the test runner dependency.
 (straight-use-package 'ert-runner)

@@ -8,7 +8,6 @@
 
 ;; Load shared helpers and dependencies.
 (require 'ci)
-(ci-load-straight)
 (straight-use-package 'ert-runner)
 (straight-use-package 'undercover)
 

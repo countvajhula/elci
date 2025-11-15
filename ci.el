@@ -4,22 +4,6 @@
 
 (require 'base)
 
-(defconst ci-packages
-  (let ((packages-env (getenv "CI_PACKAGES")))
-    (unless (and packages-env (not (string-equal packages-env "")))
-      (error "The CI_PACKAGES environment variable is not set or is empty."))
-    (split-string packages-env " " t))
-  "A list of all packages to be checked in the CI process.")
-
-(defconst ci-project-name (getenv "CI_PROJECT")
-  "The project name, read from the CI_PROJECT environment variable.
-If non-nil, this indicates the project is a package suite. If nil,
-it is treated as a single-package repository.")
-
-;; If a project name is not specified, it cannot be a multi-package repository.
-(when (and (null ci-project-name) (> (length ci-packages) 1))
-  (error "CI_PROJECT env var must be set for multi-package repositories"))
-
 (defun ci-load-straight ()
   "Load straight.el and register the local Elacarte recipe repository."
   ;; All CI scripts must see this value when they are loaded.
@@ -45,6 +29,23 @@ it is treated as a single-package repository.")
     ;; we don't need to build the recipe repository as it has
     ;; already been built. We just need to let straight know about it.
     (elacarte-register-recipe-repository)))
+
+(ci-load-straight)
+
+(defconst ci-packages
+  (let* ((repo-root (expand-file-name ".."))
+         (project-recipes (expand-file-name "recipes.eld" repo-root)))
+    (elacarte-get-primary-recipes project-recipes))
+  "A list of all packages to be checked in the CI process.")
+
+(defconst ci-project-name (getenv "CI_PROJECT")
+  "The project name, read from the CI_PROJECT environment variable.
+If non-nil, this indicates the project is a package suite. If nil,
+it is treated as a single-package repository.")
+
+;; If a project name is not specified, it cannot be a multi-package repository.
+(when (and (null ci-project-name) (> (length ci-packages) 1))
+  (error "CI_PROJECT env var must be set for multi-package repositories"))
 
 (defun ci-get-load-path-args (pkg-name &optional extra-dirs)
   "Return a list of \"-L /path\" arguments for PKG-NAME.

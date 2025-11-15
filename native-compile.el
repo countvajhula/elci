@@ -8,7 +8,6 @@
 
 ;; Load the shared CI helper functions and constants.
 (require 'ci)
-(ci-load-straight)
 
 
 ;; --- The Direct Native Compilation Tool ---
