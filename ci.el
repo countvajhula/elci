@@ -21,7 +21,7 @@ it is treated as a single-package repository.")
   (error "CI_PROJECT env var must be set for multi-package repositories"))
 
 (defun ci-load-straight ()
-  "Load straight.el and register the local 'xelpa' recipe repository."
+  "Load straight.el and register the local Elacarte recipe repository."
   ;; All CI scripts must see this value when they are loaded.
   (defvar straight-base-dir (expand-file-name "init"))
 

@@ -19,7 +19,7 @@
 
 (dolist (pkg ci-packages)
   (message (format "\n--- Installing %s ---" pkg))
-  ;; Install the package using its recipe from `xelpa`.
+  ;; Install the package using its recipe from the local Elacarte repository.
   (straight-use-package (intern pkg))
 
   ;; --- Show contents of build directory ---

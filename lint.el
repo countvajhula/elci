@@ -11,7 +11,7 @@
 (ci-load-straight)
 
 ;; Install the linter. straight.el will find the
-;; recipe for this package in the local `xelpa` repository.
+;; recipe for this package in the local Elacarte repository.
 ;; If there's no recipe there, it will look on standard configured
 ;; archives. If the client repo is using the package suite pattern
 ;; (i.e., multiple packages sharing a common project namespace), the

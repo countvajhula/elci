@@ -1,6 +1,8 @@
 ;; bootstrap.el
-;; This script bootstraps straight.el and generates the local `xelpa`
-;; recipe repository from the project's `.ci/recipes.eld` file.
+;; This script bootstraps straight.el and generates the local Elacarte
+;; recipe repository from the project's advertised recipes in
+;; `recipes.eld` and `.ci/recipes.eld` file, as well as any recipes
+;; declared by Elci for CI.
 ;; -*- lexical-binding: t -*-
 
 (require 'base (expand-file-name "base.el"))
@@ -50,12 +52,14 @@
   (require 'elacarte)
   ;; 2. add recipes in the order: elci, project, project's .ci. [don't support "."]
   (if (file-exists-p elci-recipes)
-      (elacarte-add-recipes-in-file elci-recipes)
+      (elacarte-traverse-recipes-file elci-recipes)
     (warn "No recipes file found in Elci for CI."))
   (if (file-exists-p project-recipes)
-      (elacarte-add-recipes-in-file project-recipes)
+      (elacarte-traverse-recipes-file project-recipes)
     (warn "No recipes file found in the project."))
   (if (file-exists-p project-ci-recipes)
+      ;; these are pure overrides so we don't traverse them,
+      ;; considering them all to be primary recipes
       (elacarte-add-recipes-in-file project-ci-recipes)
     (warn "No recipes file found in the project's CI overrides."))
   ;; 3. set up local elacarte recipe repo
