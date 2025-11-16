@@ -35,10 +35,19 @@
 (ci-load-straight)
 
 (defconst ci-packages
-  (let ((repo-root (expand-file-name "..")))
-    (mapcar #'elacarte--package-name
-            (elacarte-get-primary-recipes
-             (elacarte--pointer-recipe-for-url repo-root))))
+  (or
+   ;; use environment variable if set. This may be useful in cases
+   ;; where the local repo name on the filesystem differs from the
+   ;; repo name on the host, where the implicit inference of packages
+   ;; provided by the project repo would fail to detect primary
+   ;; recipes.
+   (let ((packages-env (getenv "CI_PACKAGES")))
+     (when (and packages-env (not (string-equal packages-env "")))
+       (split-string packages-env " " t)))
+   (let ((repo-root (expand-file-name "..")))
+     (mapcar #'elacarte--package-name
+             (elacarte-get-primary-recipes
+              (elacarte--pointer-recipe-for-url repo-root)))))
   "A list of all packages to be checked in the CI process.")
 
 (defconst ci-project-name (getenv "CI_PROJECT")
