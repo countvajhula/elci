@@ -35,11 +35,10 @@
 (ci-load-straight)
 
 (defconst ci-packages
-  (let* ((repo-root (expand-file-name ".."))
-         (project-recipes (expand-file-name "recipes.eld" repo-root)))
+  (let ((repo-root (expand-file-name "..")))
     (mapcar #'elacarte--package-name
             (elacarte-get-primary-recipes
-             (elacarte--read-data project-recipes))))
+             (elacarte--pointer-recipe-for-url repo-root))))
   "A list of all packages to be checked in the CI process.")
 
 (defconst ci-project-name (getenv "CI_PROJECT")
