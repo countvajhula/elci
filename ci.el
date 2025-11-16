@@ -17,6 +17,8 @@
       (error "straight.el not found. Run bootstrap.el first."))
     (load bootstrap-file nil 'nomessage))
 
+  (require 'straight)
+
   ;; Disable recipe inheritance to prevent unnecessary network access.
   (setq straight-allow-recipe-inheritance nil)
 
