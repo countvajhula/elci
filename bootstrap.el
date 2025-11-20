@@ -52,14 +52,17 @@
   (require 'elacarte)
   ;; 2. add recipes in the order: elci, project, project's .ci. [don't support "."]
   (if (file-exists-p elci-recipes)
-      (elacarte-traverse-recipes-file elci-recipes)
+      ;; add these literally - don't traverse
+      (elacarte-add-recipes-in-file elci-recipes)
     (warn "No recipes file found in Elci for CI."))
   (if (file-exists-p project-recipes)
+      ;; traverse this, as it is an ordinary project cookbook,
+      ;; containing primary recipes as well as pointers to
+      ;; dependencies
       (elacarte-traverse-recipes-file project-recipes)
     (warn "No recipes file found in the project."))
   (if (file-exists-p project-ci-recipes)
-      ;; these are pure overrides so we don't traverse them,
-      ;; considering them all to be primary recipes
+      ;; add these literally as well, as they are pure overrides
       (elacarte-add-recipes-in-file project-ci-recipes)
     (warn "No recipes file found in the project's CI overrides."))
   ;; 3. set up local elacarte recipe repo

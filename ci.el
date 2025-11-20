@@ -26,6 +26,17 @@
   ;; This ensures that straight.el knows about our local recipes and gives
   ;; them the highest priority.
   (let ((elci-recipes (expand-file-name "ci-recipes.eld")))
+    ;; Ordinarily, as Elacarte is a dependency of Elci, convention
+    ;; would dictate including its recipe as a "pointer" in Elci's
+    ;; main cookbook (i.e. `recipes.eld`), where it is indeed present.
+    ;; But since Elacarte itself is needed in order to be able to
+    ;; follow such a pointer and discover the canonical recipe, we
+    ;; would need to duplicate this algorithm here in order for this
+    ;; to work correctly. Instead, it's simpler to just duplicate the
+    ;; canonical recipe in a special `ci-recipes.eld` file that is
+    ;; used literally rather than traversed.
+    ;; This is only needed in case of a direct dependency on Elacarte
+    ;; itself.
     (bootstrap-elacarte elci-recipes)
     (require 'elacarte)
     ;; we don't need to build the recipe repository as it has
