@@ -86,7 +86,7 @@ Overriding Recipes During CI
 
 In addition to the main recipes file for your project, if necessary, you can also specify custom overriding recipes for any package or tool *during the operation of CI specifically* (e.g., ``package-lint``, ``undercover``) in a ``.ci/recipes.eld`` file in your repo. This file has the same format as your main ``recipes.eld`` file, but its recipes will be used verbatim, and there will be no distinction made between primary recipes and "pointers." The recipes in this file override all others during CI operation.
 
-As one example, if either (a) your project has more than one package sharing a common namespace prefix, or (b) your project has dependencies that are not listed on central package archives (but are declared in your ``recipes.eld``), you will need to use the ``github.com/countvajhula/package-lint`` fork for linting (the upstream package, for the moment, has a hard dependency on ``package.el`` and on central package archives for finding dependencies), by declaring this in your project's ``.ci/recipes.eld``:
+As one example, if either (a) your project has more than one package sharing a common namespace prefix, or (b) your project has dependencies that are not listed on central package archives (but are declared in your ``recipes.eld``), you will need to use the `countvajhula fork <https://github.com/countvajhula/package-lint/>`__ for linting (the upstream package, for the moment, has a hard dependency on ``package.el`` and on central package archives for finding dependencies), by declaring this in your project's ``.ci/recipes.eld``:
 
 .. code-block:: emacs-lisp
 
@@ -142,7 +142,7 @@ For a single-package project hosted on GitHub that uses all the CI steps includi
 
 - `Makefile <https://github.com/countvajhula/dynaring/blob/master/Makefile>`__
 
-- `recipes.eld <https://github.com/countvajhula/dynaring/blob/master/.ci/recipes.eld>`__
+- `recipes.eld <https://github.com/countvajhula/dynaring/blob/master/recipes.eld>`__
 
 - `GitHub Actions Workflow <https://github.com/countvajhula/dynaring/blob/master/.github/workflows/test.yml>`__
 
@@ -153,7 +153,9 @@ For a `multi-package project <https://drym-org.github.io/symex.el/Installing-Sym
 
 - `Makefile <https://github.com/drym-org/symex.el/blob/main/Makefile>`_
 
-- `recipes.eld <https://github.com/drym-org/symex.el/blob/main/.ci/recipes.eld>`__
+- `recipes.eld <https://github.com/drym-org/symex.el/blob/main/recipes.eld>`__
+
+- `.ci/recipes.eld <https://github.com/drym-org/symex.el/blob/main/.ci/recipes.eld>`__
 
 - `GitHub Actions Workflow <https://github.com/drym-org/symex.el/blob/main/.github/workflows/test.yml>`_
 
