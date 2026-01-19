@@ -51,7 +51,7 @@ For example, a single-package project might have a ``recipes.eld`` like this:
 
    ;; recipes.eld for a single-package repo
    (
-    (my-package :type git :local-repo "." :files ("*.el"))
+    (my-package :type git :host github :repo "my-user/my-package" :files ("*.el"))
    )
 
 A multi-package suite would define a recipe for each of its components:
@@ -60,8 +60,8 @@ A multi-package suite would define a recipe for each of its components:
 
    ;; recipes.eld for a multi-package suite
    (
-    (my-core :type git :local-repo "." :files ("my-core/*.el"))
-    (my-ui :type git :local-repo "." :files ("my-ui/*.el"))
+    (my-package-core :type git :host github :repo "my-user/my-package" :files ("my-core/*.el"))
+    (my-package-ui :type git :host github :repo "my-user/my-package" :files ("my-ui/*.el"))
    )
 
 A recipes.eld could always include pointer recipes to dependencies, for example:
@@ -70,7 +70,7 @@ A recipes.eld could always include pointer recipes to dependencies, for example:
 
    ;; recipes.eld for a single-package repo
    (
-    (my-package :type git :local-repo "." :files ("*.el"))
+    (my-package :type git :host github :repo "my-user/my-package" :files ("*.el"))
     ;; A "pointer" recipe for an external dependency is
     ;; generally optional, but it is required if the dependency recipe
 	;; isn't listed on a central package archive such as ELPA.
