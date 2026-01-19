@@ -42,23 +42,6 @@ Elacarte expects project recipes to be advertised in a ``recipes.eld`` file at t
 * **Format**: The file should contain a single Lisp list of Straight.el-style package recipes. Note that if there is only one recipe, this file still needs to be a single-element list containing that recipe.
 * **Content**: The list should at a minimum include recipes for all packages within your repository. It could also include "pointer" recipes for external dependencies that are not on standard package archives like ELPA, or whose standard recipe you want to override for any reason. These pointer recipes are only consulted to discover the location of the dependency repos (e.g, only fields such as ``:host`` and ``:repo`` are consulted), which are then traversed to discover their actual recipes. That is, these pointer recipes are not expected to be complete and valid recipes for *building* the dependency, only for *finding* it.
 
-Overriding Recipes for CI
-`````````````````````````
-
-In addition to the main recipes file for your project, if necessary, you can also specify custom overriding recipes for any package or tool *during the operation of CI specifically* (e.g., ``package-lint``, ``undercover``) in a ``.ci/recipes.eld`` file in your repo. This file has the same format as your main ``recipes.eld`` file, but its recipes will be used verbatim, and there will be no distinction made between primary recipes and "pointers." The recipes in this file override all others during CI operation.
-
-As one example, if either (a) your project has more than one package sharing a common namespace prefix, or (b) your project has dependencies that are not listed on central package archives (but are declared in your ``recipes.eld``), you will need to use the ``github.com/countvajhula/package-lint`` fork for linting (the upstream package, for the moment, has a hard dependency on ``package.el`` and on central package archives for finding dependencies), by declaring this in your project's ``.ci/recipes.eld``:
-
-.. code-block:: emacs-lisp
-
-  (
-   (package-lint
-    :host github
-    :repo "countvajhula/package-lint"
-    ;; Ensure the necessary data files are included in the build.
-    :files ("*.el" "data"))
-  )
-
 Examples
 ````````
 
@@ -97,6 +80,23 @@ A recipes.eld could always include pointer recipes to dependencies, for example:
 During the ``bootstrap`` step, these recipe files are used to generate a local recipe repository called "Elacarte Cookbook", which becomes the primary source for package information during the CI run.
 
 These ``recipes.eld`` files are the source of truth on how to build your packages, including any dependencies and tools used during CI. Any recipes *not* specified in these files will be discovered from configured standard package archives such as ELPA, NonGNU ELPA, and MELPA. You can always override the standard recipes in the appropriate ``recipes.eld`` file.
+
+Overriding Recipes During CI
+````````````````````````````
+
+In addition to the main recipes file for your project, if necessary, you can also specify custom overriding recipes for any package or tool *during the operation of CI specifically* (e.g., ``package-lint``, ``undercover``) in a ``.ci/recipes.eld`` file in your repo. This file has the same format as your main ``recipes.eld`` file, but its recipes will be used verbatim, and there will be no distinction made between primary recipes and "pointers." The recipes in this file override all others during CI operation.
+
+As one example, if either (a) your project has more than one package sharing a common namespace prefix, or (b) your project has dependencies that are not listed on central package archives (but are declared in your ``recipes.eld``), you will need to use the ``github.com/countvajhula/package-lint`` fork for linting (the upstream package, for the moment, has a hard dependency on ``package.el`` and on central package archives for finding dependencies), by declaring this in your project's ``.ci/recipes.eld``:
+
+.. code-block:: emacs-lisp
+
+  (
+   (package-lint
+    :host github
+    :repo "countvajhula/package-lint"
+    ;; Ensure the necessary data files are included in the build.
+    :files ("*.el" "data"))
+  )
 
 3. Declare Environment Variables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
