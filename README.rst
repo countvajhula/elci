@@ -73,7 +73,7 @@ A recipes.eld could always include pointer recipes to dependencies, for example:
     (my-package :type git :host github :repo "my-user/my-package" :files ("*.el"))
     ;; A "pointer" recipe for an external dependency is
     ;; generally optional, but it is required if the dependency recipe
-	;; isn't listed on a central package archive such as ELPA.
+    ;; isn't listed on a central package archive such as ELPA.
     (my-dependency :host github :repo "user/my-dependency")
    )
 
