@@ -32,7 +32,7 @@ It's advisable to use a dot-prefixed name for the cloned folder so that its cont
 2. Declare Package Recipes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Elci finds and builds packages using Elacarte.
+Elci finds and builds packages using `Elacarte <https://github.com/countvajhula/elacarte>`_.
 
 Elacarte allows you to declare recipes for building your project's packages in your project repository itself, avoiding the need for package managers such as Straight.el (and by extension, Elci) to consult third party centralized archives like ELPA for this essential information.
 
