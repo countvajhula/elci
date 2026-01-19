@@ -7,7 +7,7 @@ Self-contained Continuous Integration (CI) for Emacs Lisp projects.
 
 Elci can be used in any ELisp project to run code quality checks locally during development as well in automated CI workflows on any CI host.
 
-Elci uses Straight.el to install packages and their dependencies using any recipes you specify. Your project itself need not be on a package archive like ELPA, and its external dependencies need not be on package archives either, as long as you specify where they can be found in their package recipes.
+Elci uses Straight.el to install packages and their dependencies using any recipes you specify. It also uses Elacarte to manage your project recipes so that your project itself need not be on a package archive like ELPA, and its external dependencies need not be on package archives either, as long as you specify where they can be found in their package recipes.
 
 The specific CI steps also use ``package-lint`` and ``checkdoc`` (for linting), and ``ert-runner`` and ``undercover`` (for tests and coverage reports).
 
@@ -32,18 +32,41 @@ It's advisable to use a dot-prefixed name for the cloned folder so that its cont
 2. Declare Package Recipes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Elci finds and builds packages based on a single, declarative recipe file that you provide. This file is the source of truth for your project's structure and dependencies.
+Elci finds and builds packages using Elacarte.
 
-* **Location**: Create a file at ``<repo-root>/.ci/recipes.eld``.
-* **Format**: The file should contain a single Lisp list of Straight.el-style package recipes.
-* **Content**: The list should at a minimum include recipes for all packages within your repository. It could also include external dependencies that are not on standard package archives like MELPA, or whose standard recipe you want to override for any reason.
-* **Local Packages**: For packages contained within your project's repository, use the special value ``:local-repo "."``.
+Elacarte allows you to declare recipes for building your project's packages in your project repository itself, avoiding the need for package managers such as Straight.el (and by extension, Elci) to consult third party centralized archives like ELPA for this essential information.
 
-For example, a single-package project might have a ``.ci/recipes.eld`` like this:
+Elacarte expects project recipes to be advertised in a ``recipes.eld`` file at the top level of your repository. If you don't already have one:
+
+* **Location**: Create a file at ``<repo-root>/recipes.eld``.
+* **Format**: The file should contain a single Lisp list of Straight.el-style package recipes. Note that if there is only one recipe, this file still needs to be a single-element list containing that recipe.
+* **Content**: The list should at a minimum include recipes for all packages within your repository. It could also include "pointer" recipes for external dependencies that are not on standard package archives like ELPA, or whose standard recipe you want to override for any reason. These pointer recipes are only consulted to discover the location of the dependency repos (e.g, only fields such as ``:host`` and ``:repo`` are consulted), which are then traversed to discover their actual recipes. That is, these pointer recipes are not expected to be complete and valid recipes for *building* the dependency, only for *finding* it.
+
+Overriding Recipes for CI
+`````````````````````````
+
+In addition to the main recipes file for your project, if necessary, you can also specify custom overriding recipes for any package or tool *during the operation of CI specifically* (e.g., ``package-lint``, ``undercover``) in a ``.ci/recipes.eld`` file in your repo. This file has the same format as your main ``recipes.eld`` file, but its recipes will be used verbatim, and there will be no distinction made between primary recipes and "pointers." The recipes in this file override all others during CI operation.
+
+As one example, if either (a) your project has more than one package sharing a common namespace prefix, or (b) your project has dependencies that are not listed on central package archives (but are declared in your ``recipes.eld``), you will need to use the ``github.com/countvajhula/package-lint`` fork for linting (the upstream package, for the moment, has a hard dependency on ``package.el`` and on central package archives for finding dependencies), by declaring this in your project's ``.ci/recipes.eld``:
 
 .. code-block:: emacs-lisp
 
-   ;; .ci/recipes.eld for a single-package repo
+  (
+   (package-lint
+    :host github
+    :repo "countvajhula/package-lint"
+    ;; Ensure the necessary data files are included in the build.
+    :files ("*.el" "data"))
+  )
+
+Examples
+````````
+
+For example, a single-package project might have a ``recipes.eld`` like this:
+
+.. code-block:: emacs-lisp
+
+   ;; recipes.eld for a single-package repo
    (
     (my-package :type git :local-repo "." :files ("*.el"))
    )
@@ -52,18 +75,28 @@ A multi-package suite would define a recipe for each of its components:
 
 .. code-block:: emacs-lisp
 
-   ;; .ci/recipes.eld for a multi-package suite
+   ;; recipes.eld for a multi-package suite
    (
     (my-core :type git :local-repo "." :files ("my-core/*.el"))
     (my-ui :type git :local-repo "." :files ("my-ui/*.el"))
-    ;; A recipe for an external dependency that isn't
-    ;; listed on a package archive such as MELPA
+   )
+
+A recipes.eld could always include pointer recipes to dependencies, for example:
+
+.. code-block:: emacs-lisp
+
+   ;; recipes.eld for a single-package repo
+   (
+    (my-package :type git :local-repo "." :files ("*.el"))
+    ;; A "pointer" recipe for an external dependency is
+    ;; generally optional, but it is required if the dependency recipe
+	;; isn't listed on a central package archive such as ELPA.
     (my-dependency :host github :repo "user/my-dependency")
    )
 
-During the ``bootstrap`` step, this file is used to generate a local recipe repository called "XELPA" (eXtra ELPA), which becomes the primary source for package information during the CI run.
+During the ``bootstrap`` step, these recipe files are used to generate a local recipe repository called "Elacarte Cookbook", which becomes the primary source for package information during the CI run.
 
-If you do not specify a recipe to use in your ``recipes.eld``, Straight will fall back to consulting common recipe repositories such as ELPA, NonGNU ELPA, and MELPA. You can always override the standard recipes using your ``recipes.eld``.
+These ``recipes.eld`` files are the source of truth on how to build your packages, including any dependencies and tools used during CI. Any recipes *not* specified in these files will be discovered from configured standard package archives such as ELPA, NonGNU ELPA, and MELPA. You can always override the standard recipes in the appropriate ``recipes.eld`` file.
 
 3. Declare Environment Variables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -84,7 +117,7 @@ You'll need the following environment variables, typically set in your project `
 
 Elci includes the following modules:
 
-- ``bootstrap``: Initializes the CI environment by bootstrapping Straight.el and generating the local XELPA recipe repository. **Must be run first.**
+- ``bootstrap``: Initializes the CI environment by bootstrapping Straight.el and generating the local Elacarte recipe repository. **Must be run first.**
 - ``install``: Installs all project packages and their dependencies.
 - ``byte-compile``: Byte-compiles the project's packages.
 - ``native-compile``: Native-compiles the project's packages (on supported Emacs versions).
