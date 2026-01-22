@@ -1,7 +1,7 @@
 elci
 ====
 
-Self-contained Continuous Integration (CI) for Emacs Lisp projects.
+Self-contained Continuous Integration (CI) for Emacs Lisp projects, including checks for installability, byte-compilation, linting, unit test coverage, and more.
 
 .. contents:: :depth: 2
 
