@@ -39,9 +39,8 @@
     ;; itself.
     (bootstrap-elacarte elci-recipes)
     (require 'elacarte)
-    ;; we don't need to build the recipe repository as it has
-    ;; already been built. We just need to let straight know about it.
-    (elacarte-register-recipe-repository)))
+    ;; Rebuild the cookbook so straight knows about it.
+    (elacarte-use-cookbook)))
 
 (ci-load-straight)
 

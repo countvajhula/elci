@@ -66,6 +66,5 @@
       (elacarte-add-recipes-in-file project-ci-recipes)
     (warn "No recipes file found in the project's CI overrides."))
   ;; 3. set up local elacarte recipe repo
-  (elacarte-build-recipe-repository)
-  (elacarte-register-recipe-repository)
+  (elacarte-use-cookbook)
   (message "--- Elacarte done ---"))
