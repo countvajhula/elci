@@ -3,7 +3,7 @@ elci
 
 Self-contained Continuous Integration (CI) for Emacs Lisp projects, including checks for installability, byte-compilation, linting, unit test coverage, and more.
 
-.. contents:: :depth: 2
+.. contents:: :depth: 3
 
 Elci can be used in any ELisp project to run code quality checks locally during development as well in automated CI workflows on any CI host.
 
@@ -86,6 +86,20 @@ Overriding Recipes During CI
 
 In addition to the main recipes file for your project, if necessary, you can also specify custom overriding recipes for any package or tool *during the operation of CI specifically* (e.g., ``package-lint``, ``undercover``) in a ``.ci/recipes.eld`` file in your repo. This file has the same format as your main ``recipes.eld`` file, but its recipes will be used verbatim, and there will be no distinction made between primary recipes and "pointers." The recipes in this file override all others during CI operation.
 
+This is the recommended way to run Elci during local development, in order for it to use your local changes instead of the canonical recipe for the package at your project root (which would cause Elci to install from your project host instead of using the local repo). To do this, add a ``.ci/recipes.eld`` containing something like:
+
+.. code-block:: emacs-lisp
+
+  (
+   (my-package
+    :local-repo "~/path/to/my/package"
+    :files ("*.el"))
+  )
+
+Remember *not* to check this file into your repo, if you are using it purely for local development.
+
+But in some cases, you may need to use custom versions of packages during CI, both locally and on your CI host.
+
 As one example, if either (a) your project has more than one package sharing a common namespace prefix, or (b) your project has dependencies that are not listed on central package archives (but are declared in your ``recipes.eld``), you will need to use the `countvajhula fork <https://github.com/countvajhula/package-lint/>`__ for linting (the upstream package, for the moment, has a hard dependency on ``package.el`` and on central package archives for finding dependencies), by declaring this in your project's ``.ci/recipes.eld``:
 
 .. code-block:: emacs-lisp
@@ -97,6 +111,8 @@ As one example, if either (a) your project has more than one package sharing a c
     ;; Ensure the necessary data files are included in the build.
     :files ("*.el" "data"))
   )
+
+As this modulates CI checks on your CI host and not just locally on your machine, this file *should* be checked into your project repo. You may still use this file to override the project recipe during local development, as described earlier (without checking in these local overrides).
 
 3. Declare Environment Variables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
